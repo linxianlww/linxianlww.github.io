@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歌词翻译工具 - Material Design 2</title>
+    <!-- Materialize CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --mdc-theme-primary: #6200EE;
+            --mdc-theme-secondary: #03DAC6;
+            --mdc-theme-background: #FAFAFA;
+            --mdc-theme-surface: #FFFFFF;
+            --mdc-theme-error: #B00020;
+        }
+
+        body {
+            background-color: var(--mdc-theme-background);
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1 0 auto;
+            padding: 20px;
+        }
+
+        .sidenav {
+            padding-top: 20px;
+            z-index: 9999;
+        }
+
+        .sidenav .user-view {
+            padding: 32px 32px 16px;
+        }
+
+        .card {
+            border-radius: 12px;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+
+        .card-content {
+            padding: 20px !important;
+        }
+
+        .card-title {
+            font-weight: 500 !important;
+            font-size: 18px !important;
+        }
+
+        .card-subtitle {
+            color: #616161;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .card-preview {
+            color: #9E9E9E;
+            font-size: 13px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-line-clamp: vertical;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .modal {
+            border-radius: 16px;
+            max-height: 85% !important;
+        }
+
+        .modal-content {
+            padding: 24px !important;
+        }
+
+        .modal-footer {
+            padding: 16px 24px !important;
+        }
+
+        .input-field label {
+            color: #616161;
+        }
+
+        .input-field input:focus + label,
+        .input-field textarea:focus + label {
+            color: var(--mdc-theme-primary) !important;
+        }
+
+        .input-field input:focus,
+        .input-field textarea:focus {
+            border-bottom: 1px solid var(--mdc-theme-primary) !important;
+            box-shadow: 0 1px 0 0 var(--mdc-theme-primary) !important;
+        }
+
+        .select-wrapper input.select-dropdown:focus {
+            border-bottom: 1px solid var(--mdc-theme-primary) !important;
+        }
+
+        .lyric-line {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #F5F5F5;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .lyric-original {
+            font-size: 16px;
+            color: #212121;
+            margin-bottom: 4px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 原文隐藏样式 */
+        .lyric-original.hidden {
+            display: none !important;
+        }
+
+        /* 参考翻译按钮 */
+        .translate-btn {
+            height: 24px !important;
+            line-height: 24px !important;
+            padding: 0 8px !important;
+            margin-left: 8px;
+        }
+        .translate-btn i {
+            font-size: 16px !important;
+        }
+
+        /* 参考翻译文本样式 */
+        .reference-trans {
+            color: #757575;
+            font-size: 13px;
+            margin: 4px 0 12px;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .lyric-translation textarea {
+            margin: 0;
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: #FFFFFF;
+            padding: 12px;
+            border-radius: 4px;
+            min-height: 60px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+        }
+
+        .lyric-translation textarea:focus {
+            border-bottom: 2px solid var(--mdc-theme-primary);
+            outline: none;
+        }
+
+        .edit-header {
+            background: var(--mdc-theme-surface);
+            padding: 16px 24px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            margin: -20px -20px 20px -20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .edit-info {
+            flex: 1;
+        }
+
+        .edit-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #212121;
+        }
+
+        .edit-meta {
+            font-size: 14px;
+            color: #757575;
+            margin-top: 4px;
+        }
+
+        .edit-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .switch-label {
+            font-size: 14px;
+            color: #616161;
+            margin-right: 8px;
+        }
+
+        .batch-actions {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #323232;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 999;
+            display: none;
+        }
+
+        .batch-actions .btn {
+            margin: 0 8px;
+        }
+
+        .card-checkbox {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+
+        .page-footer {
+            background: var(--mdc-theme-surface);
+            color: #757575;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9E9E9E;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 16px;
+            color: #E0E0E0;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        .import-btn {
+            margin-right: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <script src="https://keepandroidopen.org/banner.js?lang=zh-CN&size=mini&animation=off"></script>
+    <nav class="white" role="navigation">
+        <div class="nav-wrapper container">
+            <a href="#!" data-target="mobile-sidenav" class="sidenav-trigger">
+                <i class="material-icons grey-text">menu</i>
+            </a>
+            <span class="brand-logo grey-text text-darken-2" style="font-size: 20px; font-weight: 500;">歌词翻译工具</span>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="#!" id="import-btn" class="grey-text text-darken-2"><i class="material-icons left">upload_file</i>导入项目</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- 侧边栏 -->
+    <ul id="mobile-sidenav" class="sidenav">
+        <li>
+            <div class="user-view">
+                <span class="title" style="font-size: 20px; font-weight: 500; color: #212121;">歌词翻译工具</span>
+            </div>
+        </li>
+        <li><div class="divider"></div></li>
+        <li><a href="#!" class="tab-link" data-tab="home"><i class="material-icons">home</i>主页</a></li>
+        <li><a href="#!" class="tab-link" data-tab="trash"><i class="material-icons">delete</i>回收站</a></li>
+    </ul>
+
+    <!-- 主内容区 -->
+    <main>
+        <!-- TAB 1: 主页 -->
+        <div id="tab-home" class="tab-content">
+            <div class="row" id="projects-grid"></div>
+            <div id="home-empty" class="empty-state" style="display: none;">
+                <i class="material-icons">note_add</i>
+                <p>还没有歌词项目</p>
+                <p>点击右下角的 + 按钮创建一个</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: 回收站 -->
+        <div id="tab-trash" class="tab-content" style="display: none;">
+            <div class="row" id="trash-grid"></div>
+            <div id="trash-empty" class="empty-state" style="display: none;">
+                <i class="material-icons">delete_outline</i>
+                <p>回收站是空的</p>
+            </div>
+        </div>
+
+        <!-- TAB 3: 编辑页 -->
+        <div id="tab-edit" class="tab-content" style="display: none;">
+            <div class="edit-header">
+                <div class="edit-info">
+                    <div class="edit-title" id="edit-title">歌曲标题</div>
+                    <div class="edit-meta" id="edit-meta">艺术家 · 原词语言 → 目标语言</div>
+                </div>
+                <!-- 显示原文开关 + 导出成品 + 保存/返回 -->
+                <div class="edit-controls">
+                    <span class="switch-label">显示原文</span>
+                    <div class="switch">
+                        <label>
+                            <input type="checkbox" id="toggle-original" checked>
+                            <span class="lever"></span>
+                        </label>
+                    </div>
+                    <a href="#!" id="export-txt" class="btn waves-effect waves-light green darken-1">
+                        <i class="material-icons left">text_fields</i>导出成品
+                    </a>
+                    <a href="#!" id="edit-save" class="btn waves-effect waves-light" style="background-color: var(--mdc-theme-primary);">
+                        <i class="material-icons left">save</i>保存
+                    </a>
+                    <a href="#!" id="edit-back" class="btn-flat grey-text">
+                        <i class="material-icons left">arrow_back</i>返回
+                    </a>
+                </div>
+            </div>
+            <div class="container" id="lyrics-container"></div>
+        </div>
+    </main>
+
+    <!-- 悬浮新建按钮 -->
+    <div class="fab" id="fab-container">
+        <a href="#!" id="new-project-btn" class="btn-floating btn-large waves-effect waves-light" style="background-color: var(--mdc-theme-primary);">
+            <i class="material-icons">add</i>
+        </a>
+    </div>
+
+    <!-- 批量操作栏 -->
+    <div class="batch-actions" id="batch-actions">
+        <span class="white-text" id="selected-count">已选择 0 项</span>
+        <a href="#!" id="batch-cancel" class="btn-flat white-text">取消</a>
+    </div>
+
+    <!-- 新建项目模态框 -->
+    <div id="new-project-modal" class="modal">
+        <div class="modal-content">
+            <h4 style="font-size: 24px; font-weight: 500; margin-bottom: 24px;">新建歌词项目</h4>
+            <form id="new-project-form">
+                <div class="row">
+                    <div class="input-field col s12 m6">
+                        <input id="new-title" type="text" class="validate" required>
+                        <label for="new-title">歌曲标题 *</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <input id="new-artist" type="text" class="validate" required>
+                        <label for="new-artist">艺术家 *</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12 m6">
+                        <select id="new-orilang" required>
+                            <option value="" disabled selected>选择原词语言</option>
+                            <option value="日语">日语</option>
+                            <option value="英语">英语</option>
+                            <option value="韩语">韩语</option>
+                            <option value="中文">中文</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <label>原词语言 *</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <select id="new-translang" required>
+                            <option value="" disabled selected>选择目标翻译语言</option>
+                            <option value="中文">中文</option>
+                            <option value="英语">英语</option>
+                            <option value="日语">日语</option>
+                            <option value="韩语">韩语</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <label>目标翻译语言 *</label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <textarea id="new-lyrics" class="materialize-textarea" style="min-height: 200px;" required></textarea>
+                        <label for="new-lyrics">原文歌词（每行一句） *</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close btn-flat grey-text">取消</a>
+            <a href="#!" id="new-project-submit" class="btn waves-effect waves-light" style="background-color: var(--mdc-theme-primary);">创建</a>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h4 style="font-size: 24px; font-weight: 500; margin-bottom: 16px;" id="confirm-title">确认操作</h4>
+            <p id="confirm-message">确定要执行此操作吗？</p>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close btn-flat grey-text">取消</a>
+            <a href="#!" id="confirm-ok" class="btn waves-effect waves-light" style="background-color: var(--mdc-theme-error);">确认</a>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="file-input" accept=".json" style="display: none;">
+
+    <!-- 页脚 -->
+    <footer class="page-footer">
+        © 2026 椎名绫宫
+    </footer>
+
+    <!-- Materialize JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        // ==================== 全局状态 ====================
+        const AppState = {
+            currentTab: 'home',
+            currentProjectKey: null,
+            currentProjectData: null,
+            originalTranslations: null,
+            selectedItems: new Set(),
+            autoSaveTimer: null,
+            isEditing: false
+        };
+
+        // 语言映射表（界面语言 → 翻译API标准代码）
+        const LANG_MAP = {
+            中文: 'zh-CN',
+            英语: 'en',
+            日语: 'ja',
+            韩语: 'ko',
+            其他: 'auto'
+        };
+
+        // ==================== 工具函数 ====================
+        function generateTimestamp() {
+            const now = new Date();
+            return now.getFullYear().toString() +
+                   String(now.getMonth() + 1).padStart(2, '0') +
+                   String(now.getDate()).padStart(2, '0') +
+                   String(now.getHours()).padStart(2, '0') +
+                   String(now.getMinutes()).padStart(2, '0') +
+                   String(now.getSeconds()).padStart(2, '0');
+        }
+
+        function validateProjectData(data) {
+            if (!data || typeof data !== 'object') return false;
+            if (!data.meta || typeof data.meta !== 'object') return false;
+            if (!data.meta.title || !data.meta.artist || !data.meta.orilang || !data.meta.translang) return false;
+            if (!Array.isArray(data.ori) || !Array.isArray(data.trans)) return false;
+            if (data.ori.length !== data.trans.length) return false;
+            return true;
+        }
+
+        function getAllProjects(prefix) {
+            const projects = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith(prefix)) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (validateProjectData(data)) {
+                            projects.push({ key, data });
+                        }
+                    } catch (e) {
+                        console.error('Invalid project data:', key);
+                    }
+                }
+            }
+            return projects;
+        }
+
+        function saveProject(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+                return true;
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    showSnackbar('存储空间已满，请清理无用项目');
+                } else {
+                    showSnackbar('保存失败：' + e.message);
+                }
+                return false;
+            }
+        }
+
+        function moveProject(oldKey, newPrefix) {
+            const data = localStorage.getItem(oldKey);
+            if (data) {
+                const timestamp = oldKey.split('_').pop();
+                const newKey = `${newPrefix}_${timestamp}`;
+                localStorage.setItem(newKey, data);
+                localStorage.removeItem(oldKey);
+                return newKey;
+            }
+            return null;
+        }
+
+        function showSnackbar(message, duration = 3000) {
+            M.toast({ html: message, displayLength: duration });
+        }
+
+        function showConfirm(title, message, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            const confirmBtn = document.getElementById('confirm-ok');
+            const modal = M.Modal.getInstance(document.getElementById('confirm-modal'));
+            
+            confirmBtn.onclick = () => {
+                modal.close();
+                onConfirm();
+            };
+            
+            modal.open();
+        }
+
+        function downloadFile(filename, content, type = 'application/json') {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==================== 新增：原文显示/隐藏开关 ====================
+        function toggleOriginalVisibility() {
+            const isChecked = document.getElementById('toggle-original').checked;
+            const elements = document.querySelectorAll('.lyric-original');
+            elements.forEach(el => {
+                if (isChecked) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+        // ==================== 新增：导出成品TXT ====================
+        function exportFinalTxt() {
+            if (!AppState.isEditing || !AppState.currentProjectData) {
+                showSnackbar('未加载有效项目');
+                return;
+            }
+
+            const { ori, trans, meta } = AppState.currentProjectData;
+            let finalText = '';
+
+            // 拼接格式：一行原文 + 一行译文 + 换行
+            for (let i = 0; i < ori.length; i++) {
+                finalText += ori[i] + '\n';
+                finalText += (trans[i] || '') + '\n\n';
+            }
+
+            // 处理文件名：替换特殊字符，避免下载错误
+            const filename = `${meta.title.replace(/[\\/:*?"<>|]/g, '')}-${meta.artist.replace(/[\\/:*?"<>|]/g, '')}.txt`;
+            // 下载TXT文件
+            downloadFile(filename, finalText, 'text/plain');
+            showSnackbar('成品 TXT 导出成功');
+        }
+
+        // ==================== 新增：逐行参考翻译（公共API） ====================
+        async function translateLine(index) {
+            const project = AppState.currentProjectData;
+            if (!project) return;
+
+            const originalText = project.ori[index];
+            if (!originalText.trim()) {
+                showSnackbar('原文为空，无法翻译');
+                return;
+            }
+
+            // 获取源语言和目标语言代码
+            const fromLang = LANG_MAP[project.meta.orilang] || 'auto';
+            const toLang = LANG_MAP[project.meta.translang] || 'zh-CN';
+
+            // 获取对应行的参考翻译元素
+            const refEl = document.querySelector(`.reference-trans[data-index="${index}"]`);
+            refEl.textContent = '翻译中...';
+            refEl.style.display = 'block';
+
+            try {
+                // 调用免费公共翻译API (MyMemory，无密钥、跨域)
+                const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(originalText)}&langpair=${fromLang}|${toLang}`);
+                const data = await res.json();
+
+                if (data.responseStatus === 200 && data.responseData?.translatedText) {
+                    refEl.textContent = data.responseData.translatedText;
+                } else {
+                    refEl.textContent = '翻译失败';
+                    showSnackbar('参考翻译失败，请重试');
+                }
+            } catch (e) {
+                refEl.textContent = '网络错误';
+                showSnackbar('网络异常，翻译失败');
+                console.error('翻译API错误:', e);
+            }
+        }
+
+        // ==================== 渲染函数 ====================
+        function renderProjectsGrid(containerId, prefix, isTrash = false) {
+            const container = document.getElementById(containerId);
+            const emptyState = document.getElementById(isTrash ? 'trash-empty' : 'home-empty');
+            const projects = getAllProjects(prefix);
+            
+            container.innerHTML = '';
+            AppState.selectedItems.clear();
+            updateBatchActions();
+            
+            if (projects.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            projects.forEach((project, index) => {
+                const col = document.createElement('div');
+                col.className = 'col s12 m6 l4';
+                col.innerHTML = `
+                    <div class="card" data-key="${project.key}">
+                        <label class="card-checkbox">
+                            <input type="checkbox" class="filled-in project-checkbox" data-key="${project.key}" />
+                            <span></span>
+                        </label>
+                        <div class="card-content">
+                            <span class="card-title grey-text text-darken-4">${escapeHtml(project.data.meta.title)}</span>
+                            <div class="card-subtitle">${escapeHtml(project.data.meta.artist)}</div>
+                            <div class="card-preview">${escapeHtml(project.data.ori[0] || '')}</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+            
+            // 绑定事件
+            container.querySelectorAll('.card').forEach(card => {
+                const key = card.dataset.key;
+                const checkbox = card.querySelector('.project-checkbox');
+                
+                card.addEventListener('click', (e) => {
+                    if (e.target === checkbox || e.target.tagName === 'SPAN' || e.target.tagName === 'INPUT') {
+                        return;
+                    }
+                    if (!isTrash) {
+                        openEditor(key);
+                    }
+                });
+                
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        AppState.selectedItems.add(key);
+                    } else {
+                        AppState.selectedItems.delete(key);
+                    }
+                    updateBatchActions();
+                });
+            });
+        }
+
+        function updateBatchActions() {
+            const batchActions = document.getElementById('batch-actions');
+            const selectedCount = document.getElementById('selected-count');
+            const isTrash = AppState.currentTab === 'trash';
+            
+            if (AppState.selectedItems.size > 0) {
+                batchActions.style.display = 'block';
+                selectedCount.textContent = `已选择 ${AppState.selectedItems.size} 项`;
+                
+                // 动态添加操作按钮
+                let actionsHtml = `
+                    <a href="#!" id="batch-cancel" class="btn-flat white-text">取消</a>
+                `;
+                
+                if (isTrash) {
+                    actionsHtml += `
+                        <a href="#!" id="batch-restore" class="btn-flat white-text"><i class="material-icons left">restore</i>还原</a>
+                        <a href="#!" id="batch-delete" class="btn-flat white-text red-text text-lighten-2"><i class="material-icons left">delete_forever</i>彻底删除</a>
+                    `;
+                } else {
+                    actionsHtml += `
+                        <a href="#!" id="batch-export" class="btn-flat white-text"><i class="material-icons left">download</i>导出</a>
+                        <a href="#!" id="batch-trash" class="btn-flat white-text red-text text-lighten-2"><i class="material-icons left">delete</i>移至回收站</a>
+                    `;
+                }
+                
+                batchActions.innerHTML = `
+                    <span class="white-text" id="selected-count">${selectedCount.textContent}</span>
+                    ${actionsHtml}
+                `;
+                
+                // 绑定事件
+                document.getElementById('batch-cancel').onclick = () => {
+                    AppState.selectedItems.clear();
+                    document.querySelectorAll('.project-checkbox').forEach(cb => cb.checked = false);
+                    updateBatchActions();
+                };
+                
+                if (isTrash) {
+                    document.getElementById('batch-restore').onclick = batchRestore;
+                    document.getElementById('batch-delete').onclick = () => {
+                        showConfirm('彻底删除', '确定要永久删除选中的项目吗？此操作不可恢复。', batchDelete);
+                    };
+                } else {
+                    document.getElementById('batch-export').onclick = batchExport;
+                    document.getElementById('batch-trash').onclick = batchMoveToTrash;
+                }
+            } else {
+                batchActions.style.display = 'none';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== TAB 切换 ====================
+        function switchTab(tab) {
+            // 检查编辑页未保存
+            if (AppState.isEditing && tab !== 'edit') {
+                if (hasUnsavedChanges()) {
+                    showConfirm('未保存的修改', '您有未保存的修改，确定要离开吗？', () => {
+                        doSwitchTab(tab);
+                    });
+                    return;
+                }
+            }
+            doSwitchTab(tab);
+        }
+
+        function doSwitchTab(tab) {
+            // 清理编辑状态
+            if (AppState.currentTab === 'edit') {
+                stopAutoSave();
+                AppState.isEditing = false;
+                AppState.currentProjectKey = null;
+                AppState.currentProjectData = null;
+                AppState.originalTranslations = null;
+            }
+            
+            AppState.currentTab = tab;
+            
+            // 隐藏所有 TAB
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById('fab-container').style.display = 'none';
+            document.getElementById('import-btn').parentElement.style.display = 'none';
+            
+            // 显示目标 TAB
+            if (tab === 'home') {
+                document.getElementById('tab-home').style.display = 'block';
+                document.getElementById('fab-container').style.display = 'block';
+                document.getElementById('import-btn').parentElement.style.display = 'block';
+                renderProjectsGrid('projects-grid', 'lyric_x_');
+            } else if (tab === 'trash') {
+                document.getElementById('tab-trash').style.display = 'block';
+                renderProjectsGrid('trash-grid', 'lyric_d_', true);
+            } else if (tab === 'edit') {
+                document.getElementById('tab-edit').style.display = 'block';
+            }
+            
+            // 修复：强制关闭侧边栏
+            const sidenav = M.Sidenav.getInstance(document.getElementById('mobile-sidenav'));
+            if(sidenav) sidenav.close();
+        }
+
+        // ==================== 编辑器功能 ====================
+        function openEditor(key) {
+            const dataStr = localStorage.getItem(key);
+            if (!dataStr) {
+                showSnackbar('项目不存在');
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(dataStr);
+                if (!validateProjectData(data)) {
+                    showSnackbar('项目数据损坏');
+                    return;
+                }
+                
+                AppState.currentProjectKey = key;
+                AppState.currentProjectData = data;
+                AppState.originalTranslations = [...data.trans];
+                AppState.isEditing = true;
+                
+                // 渲染编辑器
+                document.getElementById('edit-title').textContent = data.meta.title;
+                document.getElementById('edit-meta').textContent = `${data.meta.artist} · ${data.meta.orilang} → ${data.meta.translang}`;
+                
+                const container = document.getElementById('lyrics-container');
+                container.innerHTML = '';
+                
+                data.ori.forEach((line, index) => {
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'lyric-line';
+                    // 新增：参考翻译按钮 + 参考翻译显示区域
+                    lineDiv.innerHTML = `
+                        <div class="lyric-original">
+                            <span>${escapeHtml(line)}</span>
+                            <button class="btn-flat tiny translate-btn" data-index="${index}" title="参考翻译">
+                                <i class="material-icons tiny">translate</i>
+                            </button>
+                        </div>
+                        <!-- 参考翻译展示区（灰色小字体） -->
+                        <div class="reference-trans" data-index="${index}"></div>
+                        <div class="lyric-translation">
+                            <textarea class="translation-input" data-index="${index}" placeholder="输入翻译...">${escapeHtml(data.trans[index] || '')}</textarea>
+                        </div>
+                    `;
+                    container.appendChild(lineDiv);
+                });
+                
+                // 自动调整文本域高度
+                container.querySelectorAll('.translation-input').forEach(textarea => {
+                    textarea.addEventListener('input', autoResizeTextarea);
+                    autoResizeTextarea.call(textarea);
+                });
+
+                // 绑定所有翻译按钮点击事件
+                container.querySelectorAll('.translate-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const index = parseInt(btn.dataset.index);
+                        translateLine(index);
+                    });
+                });
+
+                // 初始化开关状态
+                document.getElementById('toggle-original').checked = true;
+                toggleOriginalVisibility();
+                
+                switchTab('edit');
+                startAutoSave();
+                
+            } catch (e) {
+                showSnackbar('加载项目失败');
+            }
+        }
+
+        function autoResizeTextarea() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        }
+
+        function hasUnsavedChanges() {
+            if (!AppState.isEditing) return false;
+            const currentTrans = collectTranslations();
+            return JSON.stringify(currentTrans) !== JSON.stringify(AppState.originalTranslations);
+        }
+
+        function collectTranslations() {
+            const trans = [];
+            document.querySelectorAll('.translation-input').forEach(input => {
+                trans.push(input.value || '');
+            });
+            return trans;
+        }
+
+        function saveProjectManual() {
+            if (!AppState.isEditing) return;
+            
+            const trans = collectTranslations();
+            if (trans.length !== AppState.currentProjectData.ori.length) {
+                showSnackbar('翻译行数不匹配');
+                return;
+            }
+            
+            AppState.currentProjectData.trans = trans;
+            if (saveProject(AppState.currentProjectKey, AppState.currentProjectData)) {
+                AppState.originalTranslations = [...trans];
+                showSnackbar('已手动保存');
+            }
+        }
+
+        function saveProjectAuto() {
+            if (!AppState.isEditing) return;
+            
+            const trans = collectTranslations();
+            if (trans.length !== AppState.currentProjectData.ori.length) {
+                return;
+            }
+            
+            AppState.currentProjectData.trans = trans;
+            if (saveProject(AppState.currentProjectKey, AppState.currentProjectData)) {
+                AppState.originalTranslations = [...trans];
+                showSnackbar('已自动保存', 1500);
+            }
+        }
+
+        function startAutoSave() {
+            stopAutoSave();
+            AppState.autoSaveTimer = setInterval(saveProjectAuto, 60000);
+        }
+
+        function stopAutoSave() {
+            if (AppState.autoSaveTimer) {
+                clearInterval(AppState.autoSaveTimer);
+                AppState.autoSaveTimer = null;
+            }
+        }
+
+        // ==================== 批量操作 ====================
+        function batchMoveToTrash() {
+            AppState.selectedItems.forEach(key => {
+                moveProject(key, 'lyric_d');
+            });
+            showSnackbar(`已将 ${AppState.selectedItems.size} 个项目移至回收站`);
+            renderProjectsGrid('projects-grid', 'lyric_x_');
+        }
+
+        function batchExport() {
+            if (AppState.selectedItems.size === 1) {
+                const key = Array.from(AppState.selectedItems)[0];
+                const data = JSON.parse(localStorage.getItem(key));
+                const filename = `${data.meta.title}-${data.meta.artist}.json`;
+                downloadFile(filename, JSON.stringify(data, null, 2));
+            } else {
+                // 多个项目分别下载
+                AppState.selectedItems.forEach((key, index) => {
+                    setTimeout(() => {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        const filename = `${data.meta.title}-${data.meta.artist}.json`;
+                        downloadFile(filename, JSON.stringify(data, null, 2));
+                    }, index * 500);
+                });
+            }
+            showSnackbar('开始下载');
+        }
+
+        function batchRestore() {
+            AppState.selectedItems.forEach(key => {
+                moveProject(key, 'lyric_x');
+            });
+            showSnackbar(`已还原 ${AppState.selectedItems.size} 个项目`);
+            renderProjectsGrid('trash-grid', 'lyric_d_', true);
+        }
+
+        function batchDelete() {
+            AppState.selectedItems.forEach(key => {
+                localStorage.removeItem(key);
+            });
+            showSnackbar(`已永久删除 ${AppState.selectedItems.size} 个项目`);
+            renderProjectsGrid('trash-grid', 'lyric_d_', true);
+        }
+
+        // ==================== 新建项目 ====================
+        function createProject() {
+            const title = document.getElementById('new-title').value.trim();
+            const artist = document.getElementById('new-artist').value.trim();
+            const orilang = document.getElementById('new-orilang').value;
+            const translang = document.getElementById('new-translang').value;
+            const lyricsText = document.getElementById('new-lyrics').value.trim();
+            
+            if (!title || !artist || !orilang || !translang || !lyricsText) {
+                showSnackbar('请填写所有必填项');
+                return;
+            }
+            
+            const ori = lyricsText.split('\n').map(line => line.trimEnd());
+            const trans = ori.map(() => '');
+            
+            const project = {
+                meta: { title, artist, orilang, translang },
+                ori,
+                trans
+            };
+            
+            const key = `lyric_x_${generateTimestamp()}`;
+            if (saveProject(key, project)) {
+                M.Modal.getInstance(document.getElementById('new-project-modal')).close();
+                document.getElementById('new-project-form').reset();
+                showSnackbar('项目创建成功');
+                renderProjectsGrid('projects-grid', 'lyric_x_');
+                // 自动打开编辑器
+                setTimeout(() => openEditor(key), 300);
+            }
+        }
+
+        // ==================== 导入项目 ====================
+        function importProject(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!validateProjectData(data)) {
+                        showSnackbar('文件格式不正确');
+                        return;
+                    }
+                    
+                    const key = `lyric_x_${generateTimestamp()}`;
+                    if (saveProject(key, data)) {
+                        showSnackbar('项目导入成功');
+                        renderProjectsGrid('projects-grid', 'lyric_x_');
+                    }
+                } catch (err) {
+                    showSnackbar('文件解析失败');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // 修复：独立初始化侧边栏
+            const sidenavElement = document.querySelectorAll('.sidenav');
+            M.Sidenav.init(sidenavElement);
+            
+            // 初始化其他组件
+            M.Modal.init(document.querySelectorAll('.modal'));
+            M.FormSelect.init(document.querySelectorAll('select'));
+            
+            // 绑定 TAB 切换
+            document.querySelectorAll('.tab-link').forEach(link => {
+                link.addEventListener('click', () => switchTab(link.dataset.tab));
+            });
+            
+            // 绑定新建项目
+            document.getElementById('new-project-btn').addEventListener('click', () => {
+                M.Modal.getInstance(document.getElementById('new-project-modal')).open();
+            });
+            
+            document.getElementById('new-project-submit').addEventListener('click', createProject);
+            
+            // 绑定导入
+            document.getElementById('import-btn').addEventListener('click', () => {
+                document.getElementById('file-input').click();
+            });
+            
+            document.getElementById('file-input').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    importProject(e.target.files[0]);
+                    e.target.value = '';
+                }
+            });
+            
+            // 绑定编辑器按钮
+            document.getElementById('edit-save').addEventListener('click', saveProjectManual);
+            document.getElementById('edit-back').addEventListener('click', () => switchTab('home'));
+            
+            // 绑定新增功能：开关 + 导出成品
+            document.getElementById('toggle-original').addEventListener('change', toggleOriginalVisibility);
+            document.getElementById('export-txt').addEventListener('click', exportFinalTxt);
+            
+            // 初始渲染主页
+            renderProjectsGrid('projects-grid', 'lyric_x_');
+        });
+
+        // 检查无痕模式
+        (function checkPrivateMode() {
+            const testKey = 'test_private_mode';
+            try {
+                localStorage.setItem(testKey, testKey);
+                localStorage.removeItem(testKey);
+            } catch (e) {
+                showSnackbar('您处于无痕模式，数据将无法保存', 5000);
+            }
+        })();
+    </script>
+</body>
+</html>
+

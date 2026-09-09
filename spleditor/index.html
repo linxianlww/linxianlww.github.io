@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>SPL逐字歌词编辑器 - 椒盐音乐格式</title>
+    <!-- Font Awesome 6 免费图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 20px 16px;
+            color: #0f172a;
+            padding-bottom: 100px;
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1.2fr 1fr;
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .dashboard {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 18px 20px 12px;
+            border-bottom: 1px solid #eef2ff;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #1e293b;
+            background: #fafcff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 音频浮动卡片 */
+        #audioFloater {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            background: white;
+            border-radius: 40px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            transition: all 0.25s ease;
+            max-width: 400px;
+            width: auto;
+            min-width: 56px;
+            overflow: hidden;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.92);
+        }
+        #audioFloater.collapsed {
+            width: 56px;
+            height: 56px;
+            border-radius: 28px;
+            background: #2563eb;
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+        }
+        #audioFloater.collapsed .audio-body {
+            display: none;
+        }
+        #audioFloater.collapsed .toggle-btn {
+            color: white;
+            background: transparent;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .audio-body {
+            padding: 16px 20px 18px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-width: 280px;
+        }
+        .audio-body .audio-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        .audio-body .audio-bar .file-btn {
+            background: #eef2ff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 500;
+            color: #1e40af;
+            cursor: pointer;
+            font-size: 13px;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .audio-body .audio-bar .play-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .audio-body .audio-bar .time-display {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 500;
+            background: #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 24px;
+            min-width: 90px;
+            text-align: center;
+        }
+        .audio-body .audio-bar .progress-slider {
+            flex: 1;
+            min-width: 80px;
+            height: 6px;
+            border-radius: 10px;
+            background: #cbd5e1;
+            cursor: pointer;
+        }
+        .audio-body .audio-bar input[type="range"] {
+            -webkit-appearance: none;
+            background: #cbd5e1;
+        }
+        .audio-body .audio-bar input[type="range"]:focus {
+            outline: none;
+        }
+        .audio-body .audio-bar input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .toggle-btn {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #475569;
+            padding: 4px;
+            line-height: 1;
+            z-index: 2;
+            border-radius: 20px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #audioFloater:not(.collapsed) .toggle-btn:hover {
+            background: #f1f5f9;
+        }
+        #audioFloater.collapsed .toggle-btn {
+            color: white;
+            font-size: 24px;
+            right: auto;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* 歌词编辑区 */
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            background: #f1f5f9;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            min-height: 44px;
+            min-width: 44px;
+            transition: 0.2s;
+            color: #0f172a;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .action-btn.primary {
+            background: #2563eb;
+            color: white;
+        }
+        .switch-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f1f5f9;
+            padding: 0 14px;
+            border-radius: 40px;
+            font-size: 13px;
+            min-height: 44px;
+            cursor: pointer;
+        }
+        .lyrics-container {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #eef2ff;
+            padding: 16px;
+            max-height: 55vh;
+            min-height: 280px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            flex: 1;
+        }
+        .lyric-line {
+            margin-bottom: 24px;
+            border-left: 3px solid #e2e8f0;
+            padding-left: 14px;
+            scroll-margin: 20vh 0 20vh 0;
+        }
+        .lyric-line.current-line {
+            border-left-color: #2563eb;
+            background: #f8faff;
+            border-radius: 0 12px 12px 0;
+            padding: 4px 14px 4px 14px;
+            margin-left: -4px;
+            transition: background 0.2s;
+        }
+        .token-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 8px;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .token {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 32px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            background: transparent;
+            color: #1e293b;
+            border: 2px solid transparent;
+            min-height: 44px;
+            min-width: 44px;
+            text-align: center;
+        }
+        @media (max-width: 640px) {
+            .token {
+                font-size: 15px;
+                padding: 4px 10px;
+                min-height: 40px;
+                min-width: 40px;
+            }
+        }
+        .token.timed {
+            background-color: #d9f0e6;
+        }
+        .token.active {
+            border: 2px solid #2563eb;
+            background-color: #eff6ff;
+        }
+        .line-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .line-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 32px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            min-height: 36px;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .line-end-time {
+            font-family: monospace;
+            font-size: 12px;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bottom-toolbar {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-shrink: 0;
+        }
+        .bottom-toolbar .tool-btn {
+            flex: 1;
+            padding: 12px 0;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            min-height: 52px;
+            transition: background 0.15s;
+            color: #0f172a;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .bottom-toolbar .tool-btn.primary {
+            background: #2563eb;
+            color: white;
+        }
+        .bottom-toolbar .tool-btn.primary:active {
+            background: #1d4ed8;
+        }
+        .bottom-toolbar .tool-btn:active {
+            background: #e2e8f0;
+        }
+
+        /* 翻译与导出卡片 */
+        .preview-area {
+            margin-top: 12px;
+        }
+        .warning-banner {
+            background: #fef9c3;
+            color: #854d0e;
+            padding: 12px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            display: none;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .export-buttons .action-btn {
+            flex: 1 0 auto;
+            text-align: center;
+            justify-content: center;
+        }
+
+        /* 翻译模态框 */
+        #translationModal .modal-card {
+            max-width: 90vw;
+            width: 820px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #translationModal .modal-card h3 {
+            margin-top: 0;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .translation-body {
+            display: flex;
+            gap: 16px;
+            flex: 1;
+            min-height: 320px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        .translation-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .translation-col label {
+            font-weight: 500;
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .translation-scroll {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 6px 8px;
+            background: #fafcff;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        #translationLyricsList {
+            background: #fafcff;
+            user-select: none;
+        }
+        #translationLyricsList .lyric-line-item {
+            height: 32px;
+            line-height: 32px;
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0 4px;
+            border-bottom: 1px dashed #eef2ff;
+            color: #0f172a;
+            scrollbar-width: thin;
+        }
+        #translationLyricsList .lyric-line-item:last-child {
+            border-bottom: none;
+        }
+        #translationLyricsList .lyric-line-item::-webkit-scrollbar {
+            height: 4px;
+        }
+        #translationLyricsList .lyric-line-item::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        #translationInputContainer {
+            background: white;
+            padding: 6px 8px;
+        }
+        .translation-input-row {
+            height: 32px;
+            line-height: 32px;
+            padding: 0 4px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+        }
+        .translation-input-row:last-child {
+            border-bottom: none;
+        }
+        .translation-input-row input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 14px;
+            color: #0f172a;
+            outline: none;
+            padding: 0;
+            white-space: nowrap;
+            overflow-x: auto;
+        }
+        .translation-input-row input::-webkit-scrollbar {
+            height: 4px;
+        }
+        .translation-input-row input::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .translation-input-row input:focus {
+            border-bottom: 2px solid #2563eb;
+            background: #f8faff;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 12px;
+            flex-shrink: 0;
+        }
+
+        /* Toast - 左上角 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1200;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            pointer-events: none;
+            max-width: 90vw;
+            width: auto;
+        }
+        .toast-item {
+            background: #1e293b;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+            pointer-events: auto;
+            animation: toastIn 0.25s ease-out;
+            max-width: 360px;
+            word-break: break-word;
+            white-space: normal;
+            text-align: left;
+        }
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+        }
+        @keyframes toastOut {
+            from {
+                opacity: 1;
+                transform: translateX(0) scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(-20px) scale(0.95);
+            }
+        }
+        .toast-item.hide {
+            animation: toastOut 0.2s ease-in forwards;
+        }
+
+        .shortcuts-hint {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 1200;
+            backdrop-filter: blur(4px);
+            max-width: 260px;
+            text-align: right;
+            line-height: 1.4;
+        }
+        @media (max-width: 860px) {
+            .shortcuts-hint {
+                display: none;
+            }
+        }
+
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal-mask.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-card {
+            background: white;
+            max-width: 90vw;
+            width: 500px;
+            border-radius: 32px;
+            padding: 20px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+            margin: 16px;
+        }
+        .modal-card textarea,
+        .modal-card input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            font-size: 16px;
+            margin: 12px 0;
+        }
+        button {
+            cursor: pointer;
+        }
+
+        .fa-icon {
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="dashboard">
+            <!-- 歌词编辑卡片 -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-pen-fancy fa-icon"></i> 歌词编辑
+                </div>
+                <div class="card-content">
+                    <div class="action-bar">
+                        <button class="action-btn" id="mergeEndBreakBtn"><i class="fas fa-arrow-right-to-bracket fa-icon"></i> 结束行+换行 (M)</button>
+                        <button class="action-btn" id="importLyricsBtn"><i class="fas fa-file-import fa-icon"></i> 导入歌词 (I)</button>
+                    </div>
+                    <div class="lyrics-container" id="lyricsContainer"></div>
+                    <div class="bottom-toolbar">
+                        <button class="tool-btn primary" id="bottomMarkBtn"><i class="fas fa-circle fa-icon"></i> 打点</button>
+                        <button class="tool-btn" id="bottomEndBreakBtn"><i class="fas fa-arrow-right-to-bracket fa-icon"></i> 换行</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 翻译与导出卡片 -->
+            <div class="card card-translate">
+                <div class="card-header">
+                    <i class="fas fa-language fa-icon"></i> 翻译 & 导出
+                </div>
+                <div class="card-content">
+                    <button class="action-btn primary" id="openTranslationModalBtn" style="width:100%; justify-content:center; margin-bottom:16px;">
+                        <i class="fas fa-language fa-icon"></i> 应用翻译
+                    </button>
+                    <div class="preview-area">
+                        <div id="warningBanner" class="warning-banner">
+                            <i class="fas fa-triangle-exclamation fa-icon"></i> 存在未打点的字词，生成的SPL时间戳可能不准确
+                        </div>
+                        <textarea id="splPreview" rows="5" readonly placeholder="SPL格式预览将显示在这里..."></textarea>
+                        <div class="export-buttons">
+                            <button class="action-btn" id="generatePreviewBtn"><i class="fas fa-rotate fa-icon"></i> 生成SPL (G)</button>
+                            <button class="action-btn" id="copyLrcBtn"><i class="fas fa-copy fa-icon"></i> 复制歌词 (C)</button>
+                            <button class="action-btn" id="downloadLrcBtn"><i class="fas fa-download fa-icon"></i> 下载 .lrc (D)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音频浮动卡片 -->
+    <div id="audioFloater">
+        <button class="toggle-btn" id="audioToggleBtn" aria-label="切换音频控制"><i class="fas fa-music fa-icon"></i></button>
+        <div class="audio-body">
+            <input type="file" id="audioFileInput" accept="audio/*" style="display:none">
+            <div class="audio-bar">
+                <button class="file-btn" id="selectAudioBtn"><i class="fas fa-folder-open fa-icon"></i> 选择</button>
+                <button class="play-btn" id="playPauseBtn"><i class="fas fa-play fa-icon"></i></button>
+                <div class="time-display" id="timeDisplay">00:00.000</div>
+                <input type="range" id="progressBar" class="progress-slider" value="0" step="0.01">
+            </div>
+            <div style="font-size: 11px; color: #64748b; text-align:center;"><i class="fas fa-chevron-down fa-icon"></i> 点击 🎵 收起</div>
+        </div>
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- 编辑歌词模态框 -->
+    <div id="customModal" class="modal-mask">
+        <div class="modal-card">
+            <h3 id="modalTitle"><i class="fas fa-edit fa-icon"></i> 编辑歌词</h3>
+            <textarea id="modalInput" rows="3" placeholder="输入新的歌词原文"></textarea>
+            <div class="modal-buttons">
+                <button id="modalCancelBtn" class="line-btn">取消</button>
+                <button id="modalConfirmBtn" class="action-btn primary"><i class="fas fa-check fa-icon"></i> 确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 翻译模态框 -->
+    <div id="translationModal" class="modal-mask">
+        <div class="modal-card">
+            <h3><i class="fas fa-language fa-icon"></i> 翻译应用</h3>
+            <div style="font-size:13px; color:#475569; margin-bottom:8px;">左侧歌词原文，右侧每行一个输入框填写翻译</div>
+            <div class="translation-body">
+                <div class="translation-col">
+                    <label><i class="fas fa-file-lines fa-icon"></i> 歌词原文</label>
+                    <div id="translationLyricsList" class="translation-scroll"></div>
+                </div>
+                <div class="translation-col">
+                    <label><i class="fas fa-pen fa-icon"></i> 翻译 (每行一句)</label>
+                    <div id="translationInputContainer" class="translation-scroll"></div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="translationCancelBtn" class="line-btn">取消</button>
+                <button id="translationConfirmBtn" class="action-btn primary"><i class="fas fa-check fa-icon"></i> 确认应用</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---------- 时间格式化 ----------
+        function formatTime(ms) {
+            let totalMs = Math.floor(ms);
+            if (isNaN(totalMs) || totalMs < 0) totalMs = 0;
+            const totalSeconds = Math.floor(totalMs / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const milliseconds = totalMs % 1000;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+        }
+
+        // ---------- 分词 (标点附着) ----------
+        function tokenizeText(text) {
+            if (!text) return [];
+            const tokens = [];
+            let i = 0;
+            const len = text.length;
+
+            function isWhitespace(ch) {
+                return ch === ' ' || ch === '\t' || ch === '\u00A0';
+            }
+
+            while (i < len) {
+                const ch = text[i];
+                if (isWhitespace(ch)) {
+                    let spaceStr = '';
+                    while (i < len && isWhitespace(text[i])) {
+                        spaceStr += text[i];
+                        i++;
+                    }
+                    if (tokens.length > 0) {
+                        tokens[tokens.length - 1] += spaceStr;
+                    }
+                    continue;
+                }
+                if (/[\u4e00-\u9fff]/.test(ch)) {
+                    tokens.push(ch);
+                    i++;
+                    continue;
+                }
+                if (/[a-zA-Z0-9]/.test(ch)) {
+                    let j = i;
+                    while (j < len && /[a-zA-Z0-9\-']/.test(text[j])) {
+                        j++;
+                    }
+                    tokens.push(text.substring(i, j));
+                    i = j;
+                    continue;
+                }
+                let punct = '';
+                while (i < len && !isWhitespace(text[i]) && !/[a-zA-Z0-9]/.test(text[i]) && !/[\u4e00-\u9fff]/.test(text[i])) {
+                    punct += text[i];
+                    i++;
+                }
+                if (tokens.length > 0) {
+                    tokens[tokens.length - 1] += punct;
+                }
+            }
+            return tokens;
+        }
+
+        // ---------- 全局变量 ----------
+        let audioElement = null;
+        let currentAudioName = "lyrics";
+        let lyricsLines = [];
+        let activeLineIdx = 0;
+        let activeTokenIdx = -1; // -1 表示无选中
+        let autoLineBreak = false;
+
+        // ---------- Toast ----------
+        function showToast(message, duration = 2000) {
+            const container = document.getElementById('toastContainer');
+            while (container.children.length >= 4) {
+                const last = container.lastChild;
+                if (last) container.removeChild(last);
+            }
+            const toast = document.createElement('div');
+            toast.className = 'toast-item';
+            toast.innerText = message;
+            container.prepend(toast);
+            setTimeout(() => {
+                toast.classList.add('hide');
+                toast.addEventListener('animationend', () => {
+                    if (toast.parentNode) toast.parentNode.removeChild(toast);
+                }, { once: true });
+            }, duration);
+        }
+
+        // ---------- 辅助函数 ----------
+        function getGlobalTokenIndex(lineIdx, tokenIdx) {
+            let idx = 0;
+            for (let i = 0; i < lineIdx; i++) idx += lyricsLines[i].tokens.length;
+            idx += tokenIdx;
+            return idx;
+        }
+
+        function resetTimesFromToken(lineIdx, tokenIdx) {
+            let resetCount = 0;
+            for (let i = 0; i < lyricsLines.length; i++) {
+                if (i < lineIdx) continue;
+                const line = lyricsLines[i];
+                let startToken = 0;
+                if (i === lineIdx) {
+                    startToken = tokenIdx + 1;
+                } else {
+                    startToken = 0;
+                }
+                for (let j = startToken; j < line.tokens.length; j++) {
+                    if (line.tokens[j].startTime !== null) {
+                        line.tokens[j].startTime = null;
+                        resetCount++;
+                    }
+                }
+            }
+            if (resetCount > 0) showToast(`已重置后面 ${resetCount} 个字词的时间戳`, 1500);
+            updatePreview();
+        }
+
+        function seekToTokenStartMinus3Seconds(tokenStartMs) {
+            if (!audioElement) { showToast("请先加载音频文件", 1000); return false; }
+            if (tokenStartMs === null || tokenStartMs === undefined) return false;
+            const seekSeconds = Math.max(0, (tokenStartMs - 3000) / 1000);
+            audioElement.currentTime = seekSeconds;
+            showToast(`⏩ 跳转到 ${formatTime(tokenStartMs - 3000)}`, 1200);
+            return true;
+        }
+
+        function nextUnsetTokenInLine(lineIdx, startIdx = 0) {
+            const tokens = lyricsLines[lineIdx].tokens;
+            for (let i = startIdx; i < tokens.length; i++) {
+                if (tokens[i].startTime === null) return i;
+            }
+            return -1;
+        }
+
+        function createNewLineAfter(lineIdx) {
+            const newLineText = "新歌词";
+            const newTokens = tokenizeText(newLineText).map(txt => ({ text: txt, startTime: null }));
+            lyricsLines.splice(lineIdx + 1, 0, {
+                originalText: newLineText,
+                tokens: newTokens,
+                lineEndTime: null,
+                _translation: null
+            });
+            activeLineIdx = lineIdx + 1;
+            activeTokenIdx = 0;
+            renderLyrics();
+            showToast("已新建歌词行", 1500);
+        }
+
+        function handleAutoLineBreakIfNeeded(lineIdx) {
+            if (!autoLineBreak) return false;
+            const line = lyricsLines[lineIdx];
+            const allTimed = line.tokens.every(t => t.startTime !== null);
+            if (allTimed) {
+                if (lineIdx === lyricsLines.length - 1) {
+                    createNewLineAfter(lineIdx);
+                } else {
+                    const nextLineIdx = lineIdx + 1;
+                    let nextTokenIdx = nextUnsetTokenInLine(nextLineIdx, 0);
+                    if (nextTokenIdx === -1) nextTokenIdx = 0;
+                    activeLineIdx = nextLineIdx;
+                    activeTokenIdx = nextTokenIdx;
+                    renderLyrics();
+                    showToast("自动换行至下一行", 1000);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        function markCurrentTimeToActiveToken() {
+            if (!audioElement) { showToast("请先加载音频文件", 1500); return false; }
+            if (lyricsLines.length === 0) return false;
+            // 如果没有选中任何token，默认选中当前行第一个未打点的
+            if (activeTokenIdx === -1 || activeTokenIdx >= lyricsLines[activeLineIdx].tokens.length) {
+                const firstUnset = nextUnsetTokenInLine(activeLineIdx, 0);
+                if (firstUnset === -1) {
+                    showToast("当前行已全部打点", 1000);
+                    return false;
+                }
+                activeTokenIdx = firstUnset;
+                renderLyrics();
+            }
+            const line = lyricsLines[activeLineIdx];
+            if (!line || activeTokenIdx >= line.tokens.length) return false;
+            const currentMs = Math.floor(audioElement.currentTime * 1000);
+            line.tokens[activeTokenIdx].startTime = currentMs;
+            showToast(`已打点: ${line.tokens[activeTokenIdx].text} @ ${formatTime(currentMs)}`, 1200);
+            const nextIdx = nextUnsetTokenInLine(activeLineIdx, activeTokenIdx + 1);
+            if (nextIdx !== -1) {
+                activeTokenIdx = nextIdx;
+                renderLyrics();
+            } else {
+                // 当前行全部打点完成，清除选中状态
+                activeTokenIdx = -1;
+                renderLyrics();
+                // 如果自动换行开启，则换到下一行
+                if (autoLineBreak) {
+                    handleAutoLineBreakIfNeeded(activeLineIdx);
+                } else {
+                    showToast("当前行已全部打点", 1000);
+                }
+            }
+            updatePreview();
+            return true;
+        }
+
+        function setCurrentLineEndTime() {
+            if (!audioElement) { showToast("请先加载音频", 1000); return false; }
+            if (lyricsLines.length === 0) return false;
+            const ms = Math.floor(audioElement.currentTime * 1000);
+            lyricsLines[activeLineIdx].lineEndTime = ms;
+            renderLyrics();
+            showToast(`行结束时间设为 ${formatTime(ms)}`, 1200);
+            updatePreview();
+            return true;
+        }
+
+        function moveToNextLine() {
+            if (lyricsLines.length === 0) return;
+            const nextLine = activeLineIdx + 1;
+            if (nextLine < lyricsLines.length) {
+                let newTokenIdx = nextUnsetTokenInLine(nextLine, 0);
+                if (newTokenIdx === -1) newTokenIdx = 0;
+                activeLineIdx = nextLine;
+                activeTokenIdx = newTokenIdx;
+                renderLyrics();
+                showToast(`切换到下一行`, 1000);
+            } else {
+                createNewLineAfter(activeLineIdx);
+                showToast("已在末尾添加新行", 1000);
+            }
+        }
+
+        function endLineAndMoveToNext() {
+            if (!audioElement) { showToast("请先加载音频文件", 1000); return; }
+            if (lyricsLines.length === 0) return;
+            if (setCurrentLineEndTime()) moveToNextLine();
+        }
+
+        function addNewLine() {
+            const newText = "新歌词";
+            const tokens = tokenizeText(newText).map(txt => ({ text: txt, startTime: null }));
+            lyricsLines.push({
+                originalText: newText,
+                tokens,
+                lineEndTime: null,
+                _translation: null
+            });
+            activeLineIdx = lyricsLines.length - 1;
+            activeTokenIdx = 0;
+            renderLyrics();
+            showToast("已添加新行", 1000);
+            updatePreview();
+        }
+
+        function clearLineEndTime(lineIdx) {
+            if (lyricsLines[lineIdx]) {
+                lyricsLines[lineIdx].lineEndTime = null;
+                renderLyrics();
+                showToast("已清除行结束时间", 1000);
+                updatePreview();
+            }
+        }
+
+        function deleteCurrentLine(lineIdx) {
+            if (lyricsLines.length <= 1) { showToast("至少需要保留一行歌词", 1500); return; }
+            lyricsLines.splice(lineIdx, 1);
+            let newIdx = Math.min(activeLineIdx, lyricsLines.length - 1);
+            if (newIdx < 0) newIdx = 0;
+            activeLineIdx = newIdx;
+            // 重置选中为当前行第一个未打点，如果没有则设为0
+            const firstUnset = nextUnsetTokenInLine(activeLineIdx, 0);
+            activeTokenIdx = firstUnset !== -1 ? firstUnset : 0;
+            renderLyrics();
+            showToast("已删除行", 1000);
+            updatePreview();
+        }
+
+        function selectLine(lineIdx) {
+            activeLineIdx = lineIdx;
+            let firstUnset = nextUnsetTokenInLine(lineIdx, 0);
+            activeTokenIdx = firstUnset !== -1 ? firstUnset : 0;
+            renderLyrics();
+            showToast(`已选中行 ${lineIdx + 1}`, 800);
+        }
+
+        let editLineCallback = null;
+
+        function editLineText(lineIdx) {
+            const line = lyricsLines[lineIdx];
+            const modal = document.getElementById('customModal');
+            const modalInput = document.getElementById('modalInput');
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit fa-icon"></i> 编辑歌词原文';
+            modalInput.value = line.originalText;
+            modal.classList.add('active');
+            editLineCallback = (newText) => {
+                if (!newText.trim()) newText = "空";
+                const newTokensRaw = tokenizeText(newText);
+                const oldTokens = line.tokens;
+                const newTokens = newTokensRaw.map((txt, idx) => {
+                    let matchedTime = null;
+                    if (idx < oldTokens.length && oldTokens[idx].text === txt) {
+                        matchedTime = oldTokens[idx].startTime;
+                    } else {
+                        const found = oldTokens.find(ot => {
+                            if (ot.text === txt) return true;
+                            const otTrimmed = ot.text.replace(/\s+$/g, '');
+                            const txtTrimmed = txt.replace(/\s+$/g, '');
+                            if (otTrimmed === txtTrimmed) return true;
+                            if (txt.startsWith(ot.text) && txt.slice(ot.text.length).trim() === '') return true;
+                            return false;
+                        });
+                        if (found) matchedTime = found.startTime;
+                    }
+                    return { text: txt, startTime: matchedTime };
+                });
+                line.originalText = newText;
+                line.tokens = newTokens;
+                if (activeLineIdx === lineIdx && activeTokenIdx >= newTokens.length) {
+                    activeTokenIdx = Math.max(0, newTokens.length - 1);
+                }
+                renderLyrics();
+                updatePreview();
+                showToast("歌词已更新", 1000);
+            };
+        }
+
+        // ---------- 翻译模态框 ----------
+        let translationInputs = [];
+
+        function openTranslationModal() {
+            const modal = document.getElementById('translationModal');
+            const lyricsList = document.getElementById('translationLyricsList');
+            const inputContainer = document.getElementById('translationInputContainer');
+
+            lyricsList.innerHTML = '';
+            inputContainer.innerHTML = '';
+            translationInputs = [];
+
+            lyricsLines.forEach((line, idx) => {
+                const div = document.createElement('div');
+                div.className = 'lyric-line-item';
+                div.textContent = `${idx+1}. ${line.originalText}`;
+                lyricsList.appendChild(div);
+            });
+
+            lyricsLines.forEach((line, idx) => {
+                const row = document.createElement('div');
+                row.className = 'translation-input-row';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = '输入翻译...';
+                input.value = line._translation ? line._translation.text : '';
+                input.dataset.index = idx;
+                row.appendChild(input);
+                inputContainer.appendChild(row);
+                translationInputs.push(input);
+            });
+
+            lyricsList.removeEventListener('scroll', syncScrollLeftToRight);
+            inputContainer.removeEventListener('scroll', syncScrollRightToLeft);
+            lyricsList.addEventListener('scroll', syncScrollLeftToRight);
+            inputContainer.addEventListener('scroll', syncScrollRightToLeft);
+
+            modal.classList.add('active');
+        }
+
+        function syncScrollLeftToRight() {
+            const left = document.getElementById('translationLyricsList');
+            const right = document.getElementById('translationInputContainer');
+            right.scrollTop = left.scrollTop;
+        }
+
+        function syncScrollRightToLeft() {
+            const left = document.getElementById('translationLyricsList');
+            const right = document.getElementById('translationInputContainer');
+            left.scrollTop = right.scrollTop;
+        }
+
+        function applyTranslationFromModal() {
+            const inputs = document.querySelectorAll('#translationInputContainer input');
+            inputs.forEach((input, idx) => {
+                const val = input.value.trim();
+                if (val) {
+                    const firstTokenTime = lyricsLines[idx].tokens.find(t => t.startTime !== null)?.startTime || null;
+                    if (firstTokenTime !== null) {
+                        lyricsLines[idx]._translation = { text: val, time: firstTokenTime };
+                    } else {
+                        lyricsLines[idx]._translation = null;
+                        showToast(`第${idx+1}行无已打点字词，跳过翻译`, 1000);
+                    }
+                } else {
+                    lyricsLines[idx]._translation = null;
+                }
+            });
+            renderLyrics();
+            updatePreview();
+            showToast("翻译已应用", 1200);
+            document.getElementById('translationModal').classList.remove('active');
+        }
+
+        // ---------- 渲染歌词 ----------
+        function renderLyrics() {
+            const container = document.getElementById('lyricsContainer');
+            container.innerHTML = '';
+
+            for (let i = 0; i < lyricsLines.length; i++) {
+                const line = lyricsLines[i];
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'lyric-line';
+                lineDiv.dataset.lineIndex = i;
+                if (i === activeLineIdx) {
+                    lineDiv.classList.add('current-line');
+                }
+
+                const tokenDiv = document.createElement('div');
+                tokenDiv.className = 'token-list';
+
+                line.tokens.forEach((token, tIdx) => {
+                    const span = document.createElement('span');
+                    span.className = 'token';
+                    if (token.startTime !== null) span.classList.add('timed');
+                    // 只有 activeTokenIdx >= 0 且匹配才添加 active
+                    if (activeTokenIdx >= 0 && activeLineIdx === i && activeTokenIdx === tIdx) {
+                        span.classList.add('active');
+                    }
+                    span.textContent = token.text;
+                    span.dataset.lineIdx = i;
+                    span.dataset.tokenIdx = tIdx;
+
+                    span.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const clickedLine = parseInt(span.dataset.lineIdx);
+                        const clickedToken = parseInt(span.dataset.tokenIdx);
+                        const currentGlobal = getGlobalTokenIndex(activeLineIdx, activeTokenIdx >= 0 ? activeTokenIdx :
+                            0);
+                        const clickedGlobal = getGlobalTokenIndex(clickedLine, clickedToken);
+                        if (activeTokenIdx >= 0 && clickedGlobal < currentGlobal) {
+                            resetTimesFromToken(clickedLine, clickedToken);
+                        }
+                        activeLineIdx = clickedLine;
+                        activeTokenIdx = clickedToken;
+                        renderLyrics();
+                        const clickedTokenData = lyricsLines[clickedLine].tokens[clickedToken];
+                        if (clickedTokenData.startTime !== null && audioElement) {
+                            seekToTokenStartMinus3Seconds(clickedTokenData.startTime);
+                        } else if (clickedTokenData.startTime === null) {
+                            showToast(`「${clickedTokenData.text}」尚未打点，无法跳转`, 1000);
+                        }
+                    });
+
+                    tokenDiv.appendChild(span);
+                });
+
+                lineDiv.appendChild(tokenDiv);
+
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'line-actions';
+                const endTimeStr = line.lineEndTime ? formatTime(line.lineEndTime) : '无';
+                actionsDiv.innerHTML = `
+                        <span class="line-end-time"><i class="fas fa-clock fa-icon"></i> 结束: ${endTimeStr}</span>
+                        <button class="line-btn" data-action="clearEnd" data-line="${i}"><i class="fas fa-trash-can fa-icon"></i> 清除结束时间</button>
+                        <button class="line-btn" data-action="delete" data-line="${i}"><i class="fas fa-xmark fa-icon"></i> 删除此行</button>
+                        <button class="line-btn" data-action="select" data-line="${i}"><i class="fas fa-arrow-pointer fa-icon"></i> 选中行</button>
+                        <button class="line-btn" data-action="edit" data-line="${i}"><i class="fas fa-pen fa-icon"></i> 编辑原文</button>
+                    `;
+                lineDiv.appendChild(actionsDiv);
+                container.appendChild(lineDiv);
+            }
+
+            document.querySelectorAll('[data-action="clearEnd"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    clearLineEndTime(parseInt(btn.dataset.line));
+                });
+            });
+            document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    deleteCurrentLine(parseInt(btn.dataset.line));
+                });
+            });
+            document.querySelectorAll('[data-action="select"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    selectLine(parseInt(btn.dataset.line));
+                });
+            });
+            document.querySelectorAll('[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    editLineText(parseInt(btn.dataset.line));
+                });
+            });
+
+            if (lyricsLines.length > 0) {
+                const currentLineEl = container.querySelector(`.lyric-line[data-line-index="${activeLineIdx}"]`);
+                if (currentLineEl) {
+                    currentLineEl.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                } else {
+                    container.scrollTop = 0;
+                }
+            }
+        }
+
+        // ---------- 导入歌词 ----------
+        function importLyricsFromText() {
+            const modal = document.getElementById('customModal');
+            const modalInput = document.getElementById('modalInput');
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-file-import fa-icon"></i> 导入歌词 (每行一句)';
+            modalInput.value = lyricsLines.map(l => l.originalText).join('\n');
+            modal.classList.add('active');
+
+            const confirmHandler = () => {
+                const rawText = modalInput.value;
+                const linesArr = rawText.split(/\r?\n/).filter(l => l.trim().length > 0);
+                if (linesArr.length === 0) {
+                    showToast("至少一行歌词", 1000);
+                    modal.classList.remove('active');
+                    return;
+                }
+                const newLyrics = [];
+                for (let lineText of linesArr) {
+                    const tokens = tokenizeText(lineText).map(txt => ({ text: txt, startTime: null }));
+                    newLyrics.push({
+                        originalText: lineText,
+                        tokens,
+                        lineEndTime: null,
+                        _translation: null
+                    });
+                }
+                lyricsLines = newLyrics;
+                activeLineIdx = 0;
+                const firstUnset = nextUnsetTokenInLine(0, 0);
+                activeTokenIdx = firstUnset !== -1 ? firstUnset : 0;
+                renderLyrics();
+                updatePreview();
+                modal.classList.remove('active');
+                showToast(`导入成功，共${lyricsLines.length}行`, 1500);
+            };
+
+            document.getElementById('modalConfirmBtn').onclick = () => {
+                confirmHandler();
+                modal.classList.remove('active');
+            };
+            document.getElementById('modalCancelBtn').onclick = () => {
+                modal.classList.remove('active');
+            };
+        }
+
+        // ---------- 初始化 ----------
+        function initDefaultLyrics() {
+            const defaultText = "你好椒盐音乐";
+            const tokens = tokenizeText(defaultText).map(txt => ({ text: txt, startTime: null }));
+            lyricsLines = [{
+                originalText: defaultText,
+                tokens,
+                lineEndTime: null,
+                _translation: null
+            }];
+            activeLineIdx = 0;
+            activeTokenIdx = 0;
+            renderLyrics();
+            updatePreview();
+        }
+
+        // ---------- 音频加载 ----------
+        function setupAudio(file) {
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.src = '';
+            }
+            const url = URL.createObjectURL(file);
+            audioElement = new Audio(url);
+            currentAudioName = file.name.replace(/\.[^/.]+$/, "");
+            audioElement.addEventListener('loadedmetadata', () => {
+                document.getElementById('progressBar').max = audioElement.duration;
+            });
+            audioElement.addEventListener('timeupdate', () => {
+                if (audioElement) {
+                    const cur = audioElement.currentTime;
+                    document.getElementById('progressBar').value = cur;
+                    document.getElementById('timeDisplay').innerText = formatTime(Math.floor(cur * 1000));
+                }
+            });
+            audioElement.addEventListener('ended', () => {
+                isPlaying = false;
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play fa-icon"></i>';
+            });
+            showToast(`已加载 ${file.name}`, 1500);
+        }
+
+        // ---------- 键盘事件 ----------
+        function isInputFocused() {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return true;
+            return document.getElementById('customModal').classList.contains('active') ||
+                document.getElementById('translationModal').classList.contains('active');
+        }
+
+        function handleKeydown(e) {
+            if (isInputFocused()) return;
+            const key = e.key,
+                ctrl = e.ctrlKey || e.metaKey;
+
+            if (key === ' ' || key === 'Space') {
+                e.preventDefault();
+                document.getElementById('playPauseBtn').click();
+                return;
+            }
+            if (key === 'ArrowLeft') {
+                e.preventDefault();
+                if (audioElement) {
+                    const step = ctrl ? 1 : 5;
+                    audioElement.currentTime = Math.max(0, audioElement.currentTime - step);
+                    showToast(`后退 ${step} 秒`, 800);
+                } else {
+                    showToast("未加载音频", 800);
+                }
+                return;
+            }
+            if (key === 'ArrowRight') {
+                e.preventDefault();
+                if (audioElement) {
+                    const step = ctrl ? 1 : 5;
+                    audioElement.currentTime = Math.min(audioElement.duration, audioElement.currentTime + step);
+                    showToast(`前进 ${step} 秒`, 800);
+                } else {
+                    showToast("未加载音频", 800);
+                }
+                return;
+            }
+            if (key === 't' || key === 'T' || key === 'r' || key === 'R' || key === '1') {
+                e.preventDefault();
+                markCurrentTimeToActiveToken();
+                return;
+            }
+            if (key === 'm' || key === 'M') {
+                e.preventDefault();
+                document.getElementById('mergeEndBreakBtn').click();
+                return;
+            }
+            if (key === 'n' || key === 'N') {
+                e.preventDefault();
+                document.getElementById('addLineBtn').click();
+                return;
+            }
+            if (key === 'i' || key === 'I') {
+                e.preventDefault();
+                document.getElementById('importLyricsBtn').click();
+                return;
+            }
+            if (key === 'a' || key === 'A') {
+                e.preventDefault();
+                const chk = document.getElementById('autoLineBreakCheckbox');
+                chk.checked = !chk.checked;
+                chk.dispatchEvent(new Event('change'));
+                showToast(`自动换行: ${chk.checked ? '开启' : '关闭'}`, 1000);
+                return;
+            }
+            if (key === 'g' || key === 'G') {
+                e.preventDefault();
+                document.getElementById('generatePreviewBtn').click();
+                return;
+            }
+            if (key === 'c' || key === 'C') {
+                e.preventDefault();
+                document.getElementById('copyLrcBtn').click();
+                return;
+            }
+            if (key === 'd' || key === 'D') {
+                e.preventDefault();
+                document.getElementById('downloadLrcBtn').click();
+                return;
+            }
+        }
+
+        // ---------- 生成SPL预览 ----------
+        function generateSPLText() {
+            let output = "";
+            for (let i = 0; i < lyricsLines.length; i++) {
+                const line = lyricsLines[i];
+                let lastTime = null;
+                let lineTokensStr = "";
+                for (let j = 0; j < line.tokens.length; j++) {
+                    const token = line.tokens[j];
+                    let timeMs = token.startTime;
+                    if (timeMs === null) timeMs = (lastTime !== null) ? lastTime + 10 : 0;
+                    timeMs = Math.floor(timeMs);
+                    lastTime = timeMs;
+                    lineTokensStr += `[${formatTime(timeMs)}]${token.text}`;
+                }
+                let lineEndStr = line.lineEndTime !== null ? `[${formatTime(Math.floor(line.lineEndTime))}]` : "";
+                output += lineTokensStr + lineEndStr + "\n";
+                if (line._translation && line._translation.text) {
+                    let transTime = line._translation.time !== null ? Math.floor(line._translation.time) : 0;
+                    output += `[${formatTime(transTime)}]${line._translation.text}\n`;
+                }
+            }
+            return output.trim();
+        }
+
+        function hasAnyUnsetToken() {
+            return lyricsLines.some(line => line.tokens.some(t => t.startTime === null));
+        }
+
+        function updatePreview() {
+            document.getElementById('splPreview').value = generateSPLText();
+            document.getElementById('warningBanner').style.display = hasAnyUnsetToken() ? "flex" : "none";
+        }
+
+        // ---------- 音频浮动卡片 ----------
+        let audioCollapsed = false;
+        document.getElementById('audioToggleBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            const floater = document.getElementById('audioFloater');
+            audioCollapsed = !audioCollapsed;
+            floater.classList.toggle('collapsed', audioCollapsed);
+            this.innerHTML = audioCollapsed ? '<i class="fas fa-music fa-icon"></i>' : '<i class="fas fa-xmark fa-icon"></i>';
+            if (!audioCollapsed) {
+                this.innerHTML = '<i class="fas fa-xmark fa-icon"></i>';
+            }
+        });
+
+        // ---------- 绑定事件 ----------
+        document.getElementById('selectAudioBtn').addEventListener('click', () => {
+            document.getElementById('audioFileInput').click();
+        });
+        document.getElementById('audioFileInput').addEventListener('change', (e) => {
+            if (e.target.files.length) setupAudio(e.target.files[0]);
+        });
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            if (!audioElement) {
+                showToast("请先选择音频文件", 1000);
+                return;
+            }
+            if (audioElement.paused) {
+                audioElement.play().catch(e => showToast("自动播放被阻止，请手动点击播放", 1500));
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause fa-icon"></i>';
+            } else {
+                audioElement.pause();
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play fa-icon"></i>';
+            }
+        });
+        document.getElementById('progressBar').addEventListener('input', (e) => {
+            if (audioElement) audioElement.currentTime = parseFloat(e.target.value);
+        });
+
+        //document.getElementById('markTimeBtn').addEventListener('click', markCurrentTimeToActiveToken);
+        //document.getElementById('addLineBtn').addEventListener('click', addNewLine);
+        document.getElementById('mergeEndBreakBtn').addEventListener('click', endLineAndMoveToNext);
+        document.getElementById('importLyricsBtn').addEventListener('click', importLyricsFromText);
+        //document.getElementById('autoLineBreakCheckbox').addEventListener('change', (e) => {
+        //    autoLineBreak = e.target.checked;
+        //});
+        document.getElementById('bottomMarkBtn').addEventListener('click', markCurrentTimeToActiveToken);
+        document.getElementById('bottomEndBreakBtn').addEventListener('click', endLineAndMoveToNext);
+
+        // 翻译模态框
+        document.getElementById('openTranslationModalBtn').addEventListener('click', openTranslationModal);
+        document.getElementById('translationCancelBtn').addEventListener('click', () => {
+            document.getElementById('translationModal').classList.remove('active');
+        });
+        document.getElementById('translationConfirmBtn').addEventListener('click', applyTranslationFromModal);
+        document.getElementById('translationModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('translationModal')) {
+                document.getElementById('translationModal').classList.remove('active');
+            }
+        });
+
+        // 导出
+        document.getElementById('generatePreviewBtn').addEventListener('click', updatePreview);
+        document.getElementById('copyLrcBtn').addEventListener('click', () => {
+            navigator.clipboard.writeText(generateSPLText());
+            showToast("已复制SPL歌词", 1200);
+        });
+        document.getElementById('downloadLrcBtn').addEventListener('click', () => {
+            const content = generateSPLText();
+            const fileName = currentAudioName ? `${currentAudioName}.lrc` : "lyrics.lrc";
+            const blob = new Blob([content], { type: "text/plain" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showToast("下载成功", 1200);
+        });
+
+        document.getElementById('modalCancelBtn').addEventListener('click', () => {
+            document.getElementById('customModal').classList.remove('active');
+        });
+        document.getElementById('customModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('customModal')) {
+                document.getElementById('customModal').classList.remove('active');
+            }
+        });
+
+        window.addEventListener('keydown', handleKeydown);
+
+        // 启动
+        initDefaultLyrics();
+        autoLineBreak = false;
+        //document.getElementById('autoLineBreakCheckbox').checked = false;
+        let isPlaying = false;
+        document.getElementById('audioFloater').classList.remove('collapsed');
+        document.getElementById('audioToggleBtn').innerHTML = '<i class="fas fa-xmark fa-icon"></i>';
+    </script>
+</body>
+</html>
