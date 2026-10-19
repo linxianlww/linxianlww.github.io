@@ -1,0 +1,1371 @@
+/* ============================================================
+   AuraDesign v1.0
+   克制、成熟的界面设计语言
+
+   使用说明
+   ────────────────────────────────────────────────────────────
+   1. 将本文件保存为 aura.css，在 <head> 中引入：
+        <link rel="stylesheet" href="aura.css" />
+   2. 推荐在 <head> 中提前执行深色模式脚本，避免闪烁：
+        <script>
+          (function () {
+            var saved = localStorage.getItem('aura-theme');
+            var prefersDark = window.matchMedia(
+              '(prefers-color-scheme: dark)'
+            ).matches;
+            if (saved === 'dark' || (!saved && prefersDark)) {
+              document.documentElement.classList.add('dark');
+            }
+          })();
+        </script>
+   3. 字体为可选依赖。如需完整效果，请引入 Inter 与
+      JetBrains Mono：
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com"
+              crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+              rel="stylesheet" />
+   4. 图标推荐 Font Awesome 6（可选）。
+   ────────────────────────────────────────────────────────────
+   注意：组件类名使用简洁命名（.btn / .input / .card …）。
+   如果你的项目已有同名类，建议给本文件的类名加统一前缀，
+   或使用 CSS Modules / Shadow DOM 隔离。
+   ============================================================ */
+
+
+/* ============================================================
+   1. 设计令牌
+   ============================================================ */
+
+:root {
+  /* 灰度背景 */
+  --bg:          #f2f3f5;
+  --surface:     #f8f9fa;
+  --surface-2:   #e9ebee;
+
+  /* 灰度文字 */
+  --text:        #23262b;
+  --text-2:      #5b6169;
+  --text-3:      #8b9199;
+
+  /* 线条 */
+  --line:        rgba(35, 38, 43, 0.09);
+  --line-strong: rgba(35, 38, 43, 0.16);
+
+  /* 强调色（唯一允许大面积使用的彩色） */
+  --accent:      #2f6bed;
+  --accent-soft: rgba(47, 107, 237, 0.09);
+  --accent-line: rgba(47, 107, 237, 0.28);
+
+  /* 语义色 */
+  --danger:      #b3261e;
+  --danger-soft: rgba(179, 38, 30, 0.09);
+  --warn:        #8a5c00;
+  --warn-soft:   rgba(224, 169, 24, 0.10);
+  --ok:          #2f7a4d;
+  --ok-soft:     rgba(47, 122, 77, 0.10);
+
+  /* 玻璃层（用于顶栏、浮层） */
+  --glass:       rgba(242, 243, 245, 0.78);
+
+  /* 阴影：极浅，只用于表达层级 */
+  --shadow-sm:   0 1px 2px rgba(23, 26, 31, 0.05);
+  --shadow-md:   0 2px 10px rgba(23, 26, 31, 0.06),
+                 0 1px 2px rgba(23, 26, 31, 0.04);
+  --shadow-lg:   0 18px 44px -20px rgba(23, 26, 31, 0.42);
+
+  /* 缓动曲线 */
+  --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+
+  color-scheme:  light;
+}
+
+html.dark {
+  --bg:          #16181b;
+  --surface:     #1c1f23;
+  --surface-2:   #23262b;
+
+  --text:        #e7e8ea;
+  --text-2:      #a1a6ad;
+  --text-3:      #737980;
+
+  --line:        rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+
+  --accent:      #6d9bff;
+  --accent-soft: rgba(109, 155, 255, 0.13);
+  --accent-line: rgba(109, 155, 255, 0.36);
+
+  --danger:      #ff8a80;
+  --danger-soft: rgba(255, 138, 128, 0.12);
+  --warn:        #d6a94c;
+  --warn-soft:   rgba(230, 180, 55, 0.10);
+  --ok:          #6fc591;
+  --ok-soft:     rgba(111, 197, 145, 0.10);
+
+  --glass:       rgba(22, 24, 27, 0.78);
+
+  --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow-md:   0 2px 12px rgba(0, 0, 0, 0.34);
+  --shadow-lg:   0 18px 46px -20px rgba(0, 0, 0, 0.8);
+
+  color-scheme:  dark;
+}
+
+
+/* ============================================================
+   2. 基础重置
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+               sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+h1, h2, h3, h4, h5, h6, p, ul, ol {
+  margin: 0;
+  padding: 0;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+/* 统一焦点可见样式（只在键盘导航时出现） */
+:where(.btn, .input, .select, .link, .pager-btn,
+       .accordion-head, .tab, .avatar):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+
+/* ============================================================
+   3. 排版
+   ============================================================ */
+
+/* 文章容器（可选，用于博客/文档类页面） */
+.article {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 72px 24px 100px;
+}
+
+.article h1 {
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.article h2 {
+  margin-top: 64px;
+  margin-bottom: 18px;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.35;
+}
+
+.article h2::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 2px;
+  margin-bottom: 18px;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+.article h3 {
+  margin-top: 32px;
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.article p {
+  margin-bottom: 18px;
+  font-size: 15.5px;
+  line-height: 1.9;
+  color: var(--text-2);
+}
+
+.article p strong {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.article p em {
+  font-style: normal;
+  padding: 0 4px;
+  color: var(--text);
+  background: var(--accent-soft);
+  border-radius: 3px;
+}
+
+.article code,
+.inline-code {
+  padding: 1px 6px;
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--text);
+  background: var(--surface-2);
+  border-radius: 4px;
+}
+
+/* 代码块 */
+.code-block {
+  padding: 14px 16px;
+  margin: 16px 0 22px;
+  font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--text-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+
+/* ============================================================
+   4. 按钮
+   ============================================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.18s ease,
+              border-color 0.18s ease,
+              color 0.18s ease,
+              box-shadow 0.18s ease,
+              filter 0.18s ease,
+              transform 0.18s ease;
+}
+
+.btn i {
+  font-size: 11.5px;
+}
+
+/* 主要按钮 */
+.btn-primary {
+  background: var(--accent);
+  color: #f6f9ff;
+  box-shadow: 0 1px 2px rgba(47, 107, 237, 0.3);
+}
+
+.btn-primary:hover {
+  filter: brightness(1.07);
+  box-shadow: 0 6px 16px -8px rgba(47, 107, 237, 0.6);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* 幽灵按钮 */
+.btn-ghost {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+
+.btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--text-3);
+}
+
+/* 危险按钮 */
+.btn-danger {
+  background: var(--danger);
+  color: #fff8f7;
+  box-shadow: 0 1px 2px rgba(179, 38, 30, 0.3);
+}
+
+.btn-danger:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px -8px rgba(179, 38, 30, 0.55);
+}
+
+/* 尺寸 */
+.btn-sm {
+  padding: 6px 11px;
+  font-size: 12.5px;
+}
+
+.btn-sm i {
+  font-size: 11px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* 禁用状态 */
+.btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: none;
+  box-shadow: none;
+  transform: none;
+}
+
+
+/* ============================================================
+   5. 链接
+   ============================================================ */
+
+.link {
+  font-size: 13.5px;
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link:visited {
+  color: var(--text-2);
+}
+
+.link.is-disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+  text-decoration: none;
+  opacity: 0.7;
+}
+
+
+/* ============================================================
+   6. 标签与徽标
+   ============================================================ */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+.tag i {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.tag-outline {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+}
+
+.tag-accent {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tag-ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.tag-danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.tag-warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #f6f9ff;
+  background: var(--accent);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+
+/* ============================================================
+   7. 表单
+   ============================================================ */
+
+/* ----- 输入框 ----- */
+.input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  outline: none;
+  transition: border-color 0.18s ease,
+              box-shadow 0.18s ease,
+              background-color 0.35s ease;
+}
+
+.input::placeholder {
+  color: var(--text-3);
+}
+
+.input:hover {
+  border-color: var(--line-strong);
+}
+
+.input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.input.is-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-soft);
+}
+
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-2);
+}
+
+/* 文本域 */
+textarea.input {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.7;
+}
+
+/* ----- 选择器 ----- */
+.select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.select-wrap::after {
+  content: '';
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--text-3);
+  border-bottom: 1.5px solid var(--text-3);
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+}
+
+.select {
+  width: 100%;
+  padding: 9px 32px 9px 12px;
+  font-size: 13.5px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.select:hover {
+  border-color: var(--line-strong);
+}
+
+.select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-2);
+}
+
+/* ----- 开关 ----- */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.switch-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  transition: background-color 0.22s ease, border-color 0.22s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text-3);
+  transition: transform 0.22s var(--ease),
+              background-color 0.22s ease;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(14px);
+  background: var(--accent);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.switch-label {
+  font-size: 13px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* ----- 复选框 ----- */
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+
+.checkbox input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.checkbox-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  color: transparent;
+  font-size: 9px;
+  transition: background-color 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease;
+}
+
+.checkbox:hover .checkbox-box {
+  border-color: var(--text-3);
+}
+
+.checkbox input:checked + .checkbox-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #f6f9ff;
+}
+
+.checkbox input:focus-visible + .checkbox-box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.checkbox input:disabled + .checkbox-box {
+  opacity: 0.45;
+}
+
+.checkbox input:disabled ~ span:last-child {
+  opacity: 0.6;
+}
+
+
+/* ============================================================
+   8. 卡片
+   ============================================================ */
+
+.card {
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  transition: border-color 0.22s ease,
+              box-shadow 0.22s ease,
+              transform 0.22s ease;
+}
+
+.card.is-interactive:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.card-text {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+
+.card-header {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.card-footer {
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+
+/* ============================================================
+   9. 头像
+   ============================================================ */
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-sm {
+  width: 28px;
+  height: 28px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.avatar-lg {
+  width: 52px;
+  height: 52px;
+  font-size: 17px;
+  border-radius: 10px;
+}
+
+.avatar-group {
+  display: flex;
+  align-items: center;
+  padding-left: 4px;
+}
+
+.avatar-group .avatar {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.avatar-group .avatar + .avatar {
+  margin-left: -8px;
+}
+
+
+/* ============================================================
+   10. 进度条
+   ============================================================ */
+
+.progress {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-strong);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.4s var(--ease);
+}
+
+
+/* ============================================================
+   11. 分隔线
+   ============================================================ */
+
+.divider {
+  width: 100%;
+  height: 1px;
+  margin: 20px 0;
+  background: var(--line);
+  border: none;
+}
+
+
+/* ============================================================
+   12. 通知
+   ============================================================ */
+
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.7;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.alert i {
+  font-size: 12px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.alert strong {
+  font-weight: 600;
+}
+
+.alert-info {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+}
+
+.alert-warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+  border-color: rgba(224, 169, 24, 0.32);
+}
+
+.alert-error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: rgba(179, 38, 30, 0.26);
+}
+
+.alert-ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+  border-color: rgba(47, 122, 77, 0.26);
+}
+
+
+/* ============================================================
+   13. 模态框
+   ============================================================ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 22, 26, 0.42);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.22s ease, visibility 0.22s;
+}
+
+.modal-backdrop.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  width: 100%;
+  max-width: 420px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(10px) scale(0.985);
+  transition: transform 0.26s var(--ease);
+}
+
+.modal-backdrop.is-open .modal {
+  transform: none;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+
+.modal-text {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text-2);
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+
+/* ============================================================
+   14. 工具提示
+   ============================================================ */
+
+.tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+}
+
+.tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 10;
+  display: inline-block;
+  padding: 5px 9px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #eceef1;
+  background: #2b2e33;
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  transform: translateX(-50%) translateY(4px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.18s ease,
+              transform 0.18s ease,
+              visibility 0.18s;
+}
+
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  background: #2b2e33;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 1px;
+}
+
+.tooltip-trigger:hover .tooltip-bubble,
+.tooltip-trigger:focus-within .tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+
+/* ============================================================
+   15. 标签页
+   ============================================================ */
+
+.tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.tab {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.18s ease,
+              background-color 0.18s ease,
+              box-shadow 0.18s ease;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab.active {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+
+/* ============================================================
+   16. 面包屑
+   ============================================================ */
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.crumbs a {
+  transition: color 0.15s ease;
+}
+
+.crumbs a:hover {
+  color: var(--text);
+}
+
+.crumb-sep {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.crumb-current {
+  color: var(--text);
+  font-weight: 500;
+}
+
+
+/* ============================================================
+   17. 分页
+   ============================================================ */
+
+.pager {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.pager-btn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s ease,
+              background-color 0.15s ease,
+              border-color 0.15s ease;
+}
+
+.pager-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.pager-btn.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  font-weight: 600;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
+/* ============================================================
+   18. 手风琴
+   ============================================================ */
+
+.accordion {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.accordion-item + .accordion-item {
+  border-top: 1px solid var(--line);
+}
+
+.accordion-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.accordion-head:hover {
+  background: var(--surface-2);
+}
+
+.accordion-head i {
+  font-size: 11px;
+  color: var(--text-3);
+  transition: transform 0.24s var(--ease);
+}
+
+.accordion-item.open .accordion-head i {
+  transform: rotate(180deg);
+}
+
+.accordion-body {
+  display: none;
+  padding: 0 14px 12px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: var(--text-2);
+}
+
+.accordion-item.open .accordion-body {
+  display: block;
+}
+
+
+/* ============================================================
+   19. 顶栏
+   ============================================================ */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  background: var(--glass);
+  -webkit-backdrop-filter: saturate(170%) blur(14px);
+  backdrop-filter: saturate(170%) blur(14px);
+  border-bottom: 1px solid var(--line);
+  transition: background-color 0.35s ease, border-color 0.35s ease;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+}
+
+/* 通用图标按钮 */
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease,
+              background-color 0.2s ease,
+              border-color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--line-strong);
+}
+
+
+/* ============================================================
+   20. 工具类
+   ============================================================ */
+
+/* 容器 */
+.aura-container {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* 仅屏幕阅读器可见 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 演示辅助：强制展示 hover / active 视觉，仅用于组件文档 */
+.btn-primary.is-hover {
+  filter: brightness(1.07);
+  box-shadow: 0 6px 16px -8px rgba(47, 107, 237, 0.6);
+}
+
+.btn-primary.is-active {
+  transform: translateY(1px);
+}
+
+.btn-ghost.is-hover {
+  background: var(--surface-2);
+  border-color: var(--text-3);
+}
+
+.input.is-focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+
+/* ============================================================
+   21. 响应式
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .aura-container {
+    padding: 0 16px;
+  }
+
+  .article {
+    padding: 40px 16px 64px;
+  }
+
+  .article h2 {
+    margin-top: 48px;
+    font-size: 1.3rem;
+  }
+
+  .article p {
+    font-size: 15px;
+  }
+
+  .btn {
+    padding: 7px 12px;
+    font-size: 12.5px;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal {
+    padding: 18px;
+    max-height: 92vh;
+    border-radius: 12px;
+  }
+
+  .code-block {
+    font-size: 11.5px;
+    padding: 12px 14px;
+  }
+}
+
+
+/* ============================================================
+   22. 动效偏好
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

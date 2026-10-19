@@ -1,0 +1,2865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>AuraDesign · 克制而成熟的界面设计语言</title>
+<meta name="description" content="AuraDesign 是一套克制、成熟的界面设计语言。灰度为主，蓝色为辅，轻阴影，动效服务于理解。" />
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('aura-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  /* ============================================================
+     1. 设计令牌
+     ============================================================ */
+  :root {
+    --bg:          #f2f3f5;
+    --surface:     #f8f9fa;
+    --surface-2:   #e9ebee;
+
+    --text:        #23262b;
+    --text-2:      #5b6169;
+    --text-3:      #8b9199;
+
+    --line:        rgba(35, 38, 43, 0.09);
+    --line-strong: rgba(35, 38, 43, 0.16);
+
+    --accent:      #2f6bed;
+    --accent-soft: rgba(47, 107, 237, 0.09);
+    --accent-line: rgba(47, 107, 237, 0.28);
+
+    --danger:      #b3261e;
+    --danger-soft: rgba(179, 38, 30, 0.09);
+    --warn:        #8a5c00;
+    --warn-soft:   rgba(224, 169, 24, 0.10);
+    --ok:          #2f7a4d;
+    --ok-soft:     rgba(47, 122, 77, 0.10);
+
+    --glass:       rgba(242, 243, 245, 0.78);
+
+    --shadow-sm:   0 1px 2px rgba(23, 26, 31, 0.05);
+    --shadow-md:   0 2px 10px rgba(23, 26, 31, 0.06), 0 1px 2px rgba(23, 26, 31, 0.04);
+    --shadow-lg:   0 18px 44px -20px rgba(23, 26, 31, 0.42);
+
+    --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+    color-scheme:  light;
+  }
+
+  html.dark {
+    --bg:          #16181b;
+    --surface:     #1c1f23;
+    --surface-2:   #23262b;
+
+    --text:        #e7e8ea;
+    --text-2:      #a1a6ad;
+    --text-3:      #737980;
+
+    --line:        rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.16);
+
+    --accent:      #6d9bff;
+    --accent-soft: rgba(109, 155, 255, 0.13);
+    --accent-line: rgba(109, 155, 255, 0.36);
+
+    --danger:      #ff8a80;
+    --danger-soft: rgba(255, 138, 128, 0.12);
+    --warn:        #d6a94c;
+    --warn-soft:   rgba(230, 180, 55, 0.10);
+    --ok:          #6fc591;
+    --ok-soft:     rgba(111, 197, 145, 0.10);
+
+    --glass:       rgba(22, 24, 27, 0.78);
+
+    --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.28);
+    --shadow-md:   0 2px 12px rgba(0, 0, 0, 0.34);
+    --shadow-lg:   0 18px 46px -20px rgba(0, 0, 0, 0.8);
+
+    color-scheme:  dark;
+  }
+
+  /* ============================================================
+     2. 基础
+     ============================================================ */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+
+  body.modal-open { overflow: hidden; }
+
+  h1, h2, h3, h4, p, ul, li { margin: 0; padding: 0; }
+  ul { list-style: none; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; max-width: 100%; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  input, textarea, select { font: inherit; }
+
+  ::selection { background: var(--accent-soft); color: var(--text); }
+
+  .container {
+    width: 100%;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ============================================================
+     3. 顶栏与 Tab 切换
+     ============================================================ */
+  .site-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 80;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    background: var(--glass);
+    -webkit-backdrop-filter: saturate(170%) blur(14px);
+    backdrop-filter: saturate(170%) blur(14px);
+    border-bottom: 1px solid var(--line);
+    transition: background-color 0.35s ease, border-color 0.35s ease;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11px;
+  }
+  .brand-tag {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 1px 6px;
+    color: var(--text-3);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+
+  .tab-switch {
+    display: flex;
+    gap: 2px;
+    margin: 0 auto;
+    padding: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .tab-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-2);
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    white-space: nowrap;
+    transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    color: var(--text);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 13px;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .icon-btn:hover {
+    color: var(--text);
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+  }
+
+  /* ============================================================
+     4. Tab 面板
+     ============================================================ */
+  main {
+    padding-top: 60px;
+    min-height: 100vh;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ============================================================
+     5. 文章（Blog + Guide 共用）
+     ============================================================ */
+  .article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 72px 24px 100px;
+  }
+
+  .article-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .article-kicker::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--text-3);
+  }
+
+  .article-title {
+    margin-top: 20px;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.035em;
+  }
+
+  .article-subtitle {
+    margin-top: 14px;
+    font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-3);
+    letter-spacing: -0.01em;
+  }
+
+  .article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+  .article-meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .article-meta i { font-size: 11px; }
+
+  .article-lead {
+    margin-top: 40px;
+    padding-left: 20px;
+    border-left: 2px solid var(--accent);
+    font-size: 16.5px;
+    line-height: 1.85;
+    color: var(--text);
+  }
+
+  .article h2 {
+    position: relative;
+    margin-top: 64px;
+    margin-bottom: 18px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.35;
+  }
+  .article h2::before {
+    content: '';
+    display: block;
+    width: 24px; height: 2px;
+    margin-bottom: 18px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  .article h3 {
+    margin-top: 32px;
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+
+  .article p {
+    margin-bottom: 18px;
+    font-size: 15.5px;
+    line-height: 1.9;
+    color: var(--text-2);
+  }
+  .article p strong {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .article p em {
+    font-style: normal;
+    padding: 0 4px;
+    color: var(--text);
+    background: var(--accent-soft);
+    border-radius: 3px;
+  }
+
+  .article code {
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 0.86em;
+    color: var(--text);
+    background: var(--surface-2);
+    border-radius: 4px;
+  }
+
+  .article ul.list {
+    margin: 20px 0;
+    padding-left: 0;
+  }
+  .article ul.list li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text-2);
+  }
+  .article ul.list li:last-child { margin-bottom: 0; }
+  .article ul.list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px; height: 1px;
+    background: var(--text-3);
+  }
+  .article ul.list li code {
+    font-size: 0.85em;
+  }
+
+  .principles {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin: 28px 0 20px;
+  }
+
+  .principle {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    align-items: start;
+    padding: 20px 22px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+  .principle:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-md);
+  }
+
+  .principle-num {
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--accent);
+    padding-top: 3px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .principle-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .principle-text {
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+    color: var(--text-2) !important;
+  }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin: 24px 0 28px;
+  }
+
+  .swatch {
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .swatch-chip {
+    height: 48px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    margin-bottom: 10px;
+  }
+  .swatch-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .swatch-val {
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  .type-scale {
+    margin: 24px 0;
+    border-top: 1px solid var(--line);
+  }
+  .type-row {
+    display: grid;
+    grid-template-columns: 68px minmax(0, 1fr);
+    gap: 18px;
+    align-items: baseline;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .type-token {
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11.5px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .type-sample {
+    color: var(--text);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .not-for {
+    margin: 24px 0;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  .not-for li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-2);
+  }
+  .not-for li:last-child { margin-bottom: 0; }
+  .not-for li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px; height: 1px;
+    background: var(--text-3);
+  }
+
+  .article-end {
+    margin-top: 64px;
+    padding-top: 32px;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-3);
+    letter-spacing: 0.02em;
+  }
+
+  /* ============================================================
+     6. 代码块
+     ============================================================ */
+  .code-block {
+    padding: 14px 16px;
+    margin: 16px 0 22px;
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text-2);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 16px;
+    margin: 26px 0;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px; height: 28px;
+    margin-top: 2px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .step-body p {
+    margin-bottom: 8px !important;
+    font-size: 14.5px !important;
+  }
+
+  .callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.75;
+    border-radius: 9px;
+    border: 1px solid var(--accent-line);
+    background: var(--accent-soft);
+    color: var(--text-2);
+  }
+  .callout i {
+    color: var(--accent);
+    font-size: 13px;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .callout strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ============================================================
+     7. 组件库布局
+     ============================================================ */
+  .components-layout {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 48px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+    align-items: start;
+  }
+
+  .side-nav {
+    position: sticky;
+    top: 84px;
+    align-self: start;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+  }
+  .side-nav::-webkit-scrollbar { width: 4px; }
+  .side-nav::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 2px;
+  }
+
+  .side-group { margin-bottom: 22px; }
+  .side-group:last-child { margin-bottom: 0; }
+
+  .side-group-title {
+    padding: 0 10px;
+    margin-bottom: 8px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  .side-link {
+    display: block;
+    padding: 7px 10px;
+    margin-bottom: 1px;
+    font-size: 13px;
+    color: var(--text-2);
+    border-left: 2px solid transparent;
+    border-radius: 0 6px 6px 0;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+  .side-link:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  .side-link.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .comp-section {
+    padding: 4px 0 40px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 84px;
+  }
+  .comp-section:last-child { border-bottom: none; }
+
+  .comp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .comp-eyebrow::before {
+    content: '';
+    width: 14px; height: 1px;
+    background: var(--text-3);
+  }
+
+  .comp-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .comp-desc {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 22px;
+    max-width: 560px;
+  }
+
+  .demo-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 18px 26px;
+    padding: 20px;
+    margin-bottom: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .demo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .demo-label {
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--text-3);
+  }
+
+  /* ============================================================
+     8. 组件样式（组件库中复用）
+     ============================================================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    white-space: nowrap;
+    transition: background-color 0.18s ease, border-color 0.18s ease,
+                color 0.18s ease, box-shadow 0.18s ease,
+                filter 0.18s ease, transform 0.18s ease;
+  }
+  .btn i { font-size: 11.5px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #f6f9ff;
+    box-shadow: 0 1px 2px rgba(47, 107, 237, 0.3);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.07);
+    box-shadow: 0 6px 16px -8px rgba(47, 107, 237, 0.6);
+  }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-primary.is-hover {
+    filter: brightness(1.07);
+    box-shadow: 0 6px 16px -8px rgba(47, 107, 237, 0.6);
+  }
+  .btn-primary.is-active { transform: translateY(1px); }
+
+  .btn-ghost {
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:hover {
+    background: var(--surface-2);
+    border-color: var(--text-3);
+  }
+  .btn-ghost.is-hover {
+    background: var(--surface-2);
+    border-color: var(--text-3);
+  }
+
+  .btn:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+    filter: none;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .input {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.35s ease;
+    outline: none;
+  }
+  .input::placeholder { color: var(--text-3); }
+  .input:hover { border-color: var(--line-strong); }
+  .input:focus,
+  .input.is-focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .input.is-error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-soft);
+  }
+  .input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--surface-2);
+  }
+
+  .select-wrap { position: relative; width: 100%; }
+  .select-wrap::after {
+    content: '';
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    width: 6px; height: 6px;
+    border-right: 1.5px solid var(--text-3);
+    border-bottom: 1.5px solid var(--text-3);
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .select {
+    width: 100%;
+    padding: 9px 32px 9px 12px;
+    font-size: 13.5px;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .select:hover { border-color: var(--line-strong); }
+  .select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .switch input {
+    position: absolute;
+    width: 0; height: 0;
+    opacity: 0;
+  }
+  .switch-track {
+    position: relative;
+    width: 32px; height: 18px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    transition: background-color 0.22s ease, border-color 0.22s ease;
+  }
+  .switch-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--text-3);
+    transition: transform 0.22s var(--ease), background-color 0.22s ease;
+  }
+  .switch input:checked + .switch-track {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .switch input:checked + .switch-track .switch-thumb {
+    transform: translateX(14px);
+    background: var(--accent);
+  }
+  .switch input:disabled + .switch-track {
+    opacity: 0.45;
+  }
+  .switch-label {
+    font-size: 13px;
+    color: var(--text-2);
+    white-space: nowrap;
+  }
+
+  .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13.5px;
+    color: var(--text-2);
+  }
+  .checkbox input {
+    position: absolute;
+    width: 0; height: 0;
+    opacity: 0;
+  }
+  .checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    background: var(--bg);
+    color: transparent;
+    font-size: 9px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .checkbox:hover .checkbox-box { border-color: var(--text-3); }
+  .checkbox input:checked + .checkbox-box {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #f6f9ff;
+  }
+  .checkbox input:disabled + .checkbox-box {
+    opacity: 0.45;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 9px;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-2);
+    background: var(--surface-2);
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .tag i { font-size: 10px; opacity: 0.7; }
+  .tag-outline {
+    background: transparent;
+    border: 1px solid var(--line-strong);
+  }
+  .tag-accent {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .tag-ok {
+    color: var(--ok);
+    background: var(--ok-soft);
+  }
+  .tag-danger {
+    color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #f6f9ff;
+    background: var(--accent);
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    min-width: 0;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+
+  .card-demo {
+    width: 260px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+  }
+  .card-demo:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .card-demo-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  .card-demo-text {
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+  .avatar-demo {
+    width: 40px; height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .avatar-demo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  .avatar-lg { width: 52px; height: 52px; font-size: 17px; border-radius: 10px; }
+  .avatar-sm { width: 28px; height: 28px; font-size: 11px; border-radius: 6px; }
+
+  .avatar-group {
+    display: flex;
+    align-items: center;
+    padding-left: 6px;
+  }
+  .avatar-group .avatar-demo {
+    position: relative;
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  .avatar-group .avatar-demo + .avatar-demo {
+    margin-left: -8px;
+  }
+
+  .progress-track {
+    width: 200px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--line-strong);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 0.4s var(--ease);
+  }
+
+  .divider-demo {
+    width: 200px;
+    height: 1px;
+    background: var(--line);
+  }
+
+  .alert-demo {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    max-width: 460px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.7;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--text-2);
+  }
+  .alert-demo i {
+    font-size: 12px;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .alert-info {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+  }
+  .alert-warn {
+    color: var(--warn);
+    background: var(--warn-soft);
+    border-color: rgba(224, 169, 24, 0.32);
+  }
+  .alert-error {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: rgba(179, 38, 30, 0.26);
+  }
+  .alert-ok {
+    color: var(--ok);
+    background: var(--ok-soft);
+    border-color: rgba(47, 122, 77, 0.26);
+  }
+  .alert-demo strong { font-weight: 600; }
+
+  .modal-preview {
+    width: 100%;
+    max-width: 320px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-preview-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .modal-preview-text {
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-2);
+    margin-bottom: 16px;
+  }
+  .modal-preview-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .modal-preview .btn { padding: 6px 12px; font-size: 12.5px; }
+
+  .tooltip-preview {
+    position: relative;
+    display: inline-block;
+    padding-top: 32px;
+  }
+  .tooltip-bubble {
+    position: relative;
+    display: inline-block;
+    padding: 5px 9px;
+    font-size: 11.5px;
+    color: #eceef1;
+    background: #2b2e33;
+    border-radius: 6px;
+    box-shadow: var(--shadow-md);
+    white-space: nowrap;
+  }
+  .tooltip-bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 8px; height: 8px;
+    background: #2b2e33;
+    transform: translateX(-50%) rotate(45deg);
+    border-radius: 1px;
+  }
+
+  .tooltip-trigger {
+    position: relative;
+    display: inline-flex;
+  }
+  .tooltip-trigger .tooltip-bubble {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    z-index: 10;
+    transform: translateX(-50%) translateY(4px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  }
+  .tooltip-trigger:hover .tooltip-bubble,
+  .tooltip-trigger:focus-within .tooltip-bubble {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .link {
+    font-size: 13.5px;
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.15s ease;
+    cursor: pointer;
+  }
+  .link:hover { text-decoration: underline; }
+  .link:visited { color: var(--text-2); }
+  .link.is-disabled {
+    color: var(--text-3);
+    cursor: not-allowed;
+    text-decoration: none;
+    opacity: 0.7;
+  }
+
+  .mini-tabs {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .mini-tab {
+    padding: 5px 12px;
+    font-size: 12.5px;
+    color: var(--text-2);
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .mini-tab:hover { color: var(--text); }
+  .mini-tab.active {
+    color: var(--text);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .crumbs {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-2);
+  }
+  .crumbs a { transition: color 0.15s ease; }
+  .crumbs a:hover { color: var(--text); }
+  .crumbs .crumb-sep { color: var(--text-3); font-size: 11px; }
+  .crumbs .crumb-current { color: var(--text); font-weight: 500; }
+
+  .pager { display: inline-flex; gap: 2px; }
+  .pager-btn {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12.5px;
+    color: var(--text-2);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .pager-btn:hover {
+    color: var(--text);
+    background: var(--surface-2);
+  }
+  .pager-btn.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+    font-weight: 600;
+  }
+  .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .accordion {
+    width: 100%;
+    max-width: 460px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .accordion-item + .accordion-item { border-top: 1px solid var(--line); }
+  .accordion-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+  .accordion-head:hover { background: var(--surface-2); }
+  .accordion-head i {
+    font-size: 11px;
+    color: var(--text-3);
+    transition: transform 0.24s var(--ease);
+  }
+  .accordion-item.open .accordion-head i { transform: rotate(180deg); }
+  .accordion-body {
+    display: none;
+    padding: 0 14px 12px;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text-2);
+  }
+  .accordion-item.open .accordion-body { display: block; }
+
+  /* ============================================================
+     9. 响应式
+     ============================================================ */
+  @media (max-width: 900px) {
+    .article { padding: 48px 20px 72px; }
+    .article-lead { margin-top: 32px; font-size: 15.5px; }
+
+    .components-layout {
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 20px 20px 80px;
+    }
+
+    .side-nav {
+      position: sticky;
+      top: 60px;
+      z-index: 20;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      max-height: none;
+      padding: 10px 0 8px;
+      margin: 0 -20px;
+      padding-left: 20px;
+      padding-right: 20px;
+      background: var(--glass);
+      -webkit-backdrop-filter: saturate(170%) blur(14px);
+      backdrop-filter: saturate(170%) blur(14px);
+      border-bottom: 1px solid var(--line);
+      scrollbar-width: none;
+    }
+    .side-nav::-webkit-scrollbar { display: none; }
+
+    .side-group { display: contents; }
+    .side-group-title { display: none; }
+
+    .side-link {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-left: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12.5px;
+      white-space: nowrap;
+    }
+    .side-link.active {
+      border-color: var(--accent-line);
+    }
+
+    .comp-section { scroll-margin-top: 120px; }
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 16px; }
+    .article { padding: 40px 16px 64px; }
+    .article-title { font-size: 1.85rem; }
+    .article h2 { margin-top: 48px; font-size: 1.3rem; }
+    .article p { font-size: 15px; }
+
+    .principle {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 16px 18px;
+    }
+    .principle-num { padding-top: 0; }
+
+    .brand-tag { display: none; }
+    .tab-btn { padding: 6px 10px; font-size: 12.5px; }
+
+    .components-layout { padding: 16px 16px 64px; }
+    .side-nav {
+      margin: 0 -16px;
+      padding-left: 16px;
+      padding-right: 16px;
+    }
+
+    .comp-title { font-size: 1.1rem; }
+    .demo-row { padding: 16px; gap: 14px 20px; }
+    .code-block { font-size: 11.5px; padding: 12px 14px; }
+
+    .card-demo { width: 100%; }
+
+    .step { grid-template-columns: 1fr; gap: 8px; }
+    .step-num { margin-top: 0; }
+  }
+
+  @media (max-width: 480px) {
+    .brand > span:not(.brand-mark):not(.brand-tag) { display: none; }
+    .tab-btn { padding: 6px 8px; font-size: 12px; }
+    .tab-switch { padding: 2px; }
+  }
+
+  /* ============================================================
+     10. 动效偏好
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     顶栏
+     ============================================================ -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#!">
+      <span class="brand-mark"><i class="fas fa-circle-half-stroke"></i></span>
+      <span>AuraDesign</span>
+      <span class="brand-tag">v1.0</span>
+    </a>
+
+    <div class="tab-switch" role="tablist" aria-label="页面切换">
+      <button class="tab-btn active" data-tab="blog" role="tab" aria-selected="true">理念</button>
+      <button class="tab-btn" data-tab="components" role="tab" aria-selected="false">组件库</button>
+      <button class="tab-btn" data-tab="guide" role="tab" aria-selected="false">使用指南</button>
+    </div>
+
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换主题">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============================================================
+       Tab 1 · 博客
+       ============================================================ -->
+  <section class="tab-panel active" id="tab-blog">
+
+    <article class="article">
+
+      <span class="article-kicker">Design Language</span>
+
+      <h1 class="article-title">AuraDesign</h1>
+      <p class="article-subtitle">一个克制、成熟的界面设计语言。</p>
+
+      <div class="article-meta">
+        <span><i class="fas fa-layer-group"></i>设计语言</span>
+        <span><i class="fas fa-clock"></i>约 8 分钟阅读</span>
+        <span><i class="fas fa-code"></i>Web · 桌面 · 移动</span>
+      </div>
+
+      <p class="article-lead">
+        界面是一种噪音。它的价值，取决于它愿意在多大程度上保持安静。
+      </p>
+
+      <h2>我们为什么需要另一套设计语言</h2>
+
+      <p>
+        今天的设计系统，大多在争夺注意力。饱和度拉满的主色、层层堆叠的阴影、
+        大到夸张的圆角、像彩蛋一样的动效——这些不是设计，而是对用户注意力的透支。
+      </p>
+
+      <p>
+        当一个界面需要用户花三秒钟去判断「这个按钮能不能点」时，
+        设计就已经失败了。<strong>AuraDesign 是一个反方向的尝试。</strong>
+        它相信界面应该像空气：存在，但不打扰。
+      </p>
+
+      <p>
+        这套语言最初诞生于几个个人项目的迭代中，后来逐渐沉淀为可复用的规则。
+        它不追求让人「哇」，只追求让人「嗯，就是这样」。
+      </p>
+
+      <h2>六条原则</h2>
+
+      <p>如果只记住六件事，那就是这些。</p>
+
+      <div class="principles">
+
+        <div class="principle">
+          <div class="principle-num">01</div>
+          <div>
+            <div class="principle-title">用灰度思考，用蓝色决定</div>
+            <p class="principle-text">
+              界面中 90% 的元素应该只由灰度构成。蓝色只留给那些真正需要用户
+              「做决定」的地方——主操作、当前选中、需要被注意的状态。
+              强调色不是装饰，是信号。
+            </p>
+          </div>
+        </div>
+
+        <div class="principle">
+          <div class="principle-num">02</div>
+          <div>
+            <div class="principle-title">不用绝对的黑色与白色</div>
+            <p class="principle-text">
+              纯黑与纯白是屏幕上的极端值，对比度过高会让眼睛疲劳。
+              用 <code>#23262b</code> 代替 <code>#000</code>，
+              用 <code>#f2f3f5</code> 代替 <code>#fff</code>，
+              留出一点呼吸的空间。
+            </p>
+          </div>
+        </div>
+
+        <div class="principle">
+          <div class="principle-num">03</div>
+          <div>
+            <div class="principle-title">用线条划分，而不是色块</div>
+            <p class="principle-text">
+              阴影很浅，边框很细。结构感来自间距和对齐，
+              而不是大面积背景色。一个页面里不应该出现两个以上互不相干的背景色块。
+            </p>
+          </div>
+        </div>
+
+        <div class="principle">
+          <div class="principle-num">04</div>
+          <div>
+            <div class="principle-title">圆角是克制的</div>
+            <p class="principle-text">
+              6px 到 12px 覆盖了几乎所有场景。超过 16px 的圆角会让人联想到
+              玩具或糖果，而不是工具。例外只有模态框和头像，可以使用 12–14px。
+            </p>
+          </div>
+        </div>
+
+        <div class="principle">
+          <div class="principle-num">05</div>
+          <div>
+            <div class="principle-title">动效服务于理解</div>
+            <p class="principle-text">
+              所有过渡都在 120–360ms 之间，使用缓出曲线。
+              动效的目的只是告诉用户「发生了什么」，而不是让他觉得「好酷」。
+              不做弹跳，不做旋转，不做超过 1.04 倍的缩放。
+            </p>
+          </div>
+        </div>
+
+        <div class="principle">
+          <div class="principle-num">06</div>
+          <div>
+            <div class="principle-title">尊重内容</div>
+            <p class="principle-text">
+              当内容和装饰冲突时，装饰让路。所有装饰性元素——光晕、网格、噪点、
+              渐变——都应该降低到 10% 以下的不透明度，或者干脆去掉。
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <h2>颜色是怎么来的</h2>
+
+      <p>
+        整个系统只有七个核心令牌。它们不是随手挑的，
+        而是在几十次对比度检查和屏幕测试之后留下来的最小值。
+      </p>
+
+      <div class="swatches">
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#f2f3f5"></div>
+          <div class="swatch-name">背景</div>
+          <div class="swatch-val">#f2f3f5</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#f8f9fa"></div>
+          <div class="swatch-name">表面</div>
+          <div class="swatch-val">#f8f9fa</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#e9ebee"></div>
+          <div class="swatch-name">表面 · 强调</div>
+          <div class="swatch-val">#e9ebee</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#23262b"></div>
+          <div class="swatch-name">主文字</div>
+          <div class="swatch-val">#23262b</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#5b6169"></div>
+          <div class="swatch-name">次文字</div>
+          <div class="swatch-val">#5b6169</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#8b9199"></div>
+          <div class="swatch-name">弱文字</div>
+          <div class="swatch-val">#8b9199</div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-chip" style="background:#2f6bed"></div>
+          <div class="swatch-name">强调色</div>
+          <div class="swatch-val">#2f6bed</div>
+        </div>
+      </div>
+
+      <p>
+        深色模式不是简单反色。<code>#16181b</code> 做主背景，<code>#1c1f23</code>
+        做表面，强调色提亮到 <code>#6d9bff</code>——因为在深色背景上，
+        原来的蓝色会显得发闷。
+      </p>
+
+      <h2>字体与排版</h2>
+
+      <p>
+        主字体 <strong>Inter</strong>，等宽字体 <strong>JetBrains Mono</strong>，
+        中文使用系统默认。字重只用 400、500、600 三档。
+      </p>
+
+      <div class="type-scale">
+        <div class="type-row">
+          <div class="type-token">11px</div>
+          <div class="type-sample" style="font-size:11px;color:var(--text-3)">标签 · 元信息 · 辅助说明</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">12.5px</div>
+          <div class="type-sample" style="font-size:12.5px;color:var(--text-2)">次要文字、代码、注释</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">14px</div>
+          <div class="type-sample" style="font-size:14px">正文（小）</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">15px</div>
+          <div class="type-sample" style="font-size:15px">正文（默认）</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">18px</div>
+          <div class="type-sample" style="font-size:18px;font-weight:500">小标题</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">24px</div>
+          <div class="type-sample" style="font-size:24px;font-weight:600">区块标题</div>
+        </div>
+        <div class="type-row">
+          <div class="type-token">36px</div>
+          <div class="type-sample" style="font-size:36px;font-weight:600">页面主标题</div>
+        </div>
+      </div>
+
+      <p>
+        行高：正文 1.65–1.9，标题 1.2–1.4。标题使用负字距（<code>-0.02em</code> 左右），
+        正文接近零字距。
+      </p>
+
+      <h2>间距与圆角</h2>
+
+      <p>
+        基础单位是 <strong>4px</strong>。常用的间距值有 8、12、16、20、24、28、32、48、64。
+        不要使用 6、10、14 这样的非 4 倍数值——它们会破坏对齐的节奏。
+      </p>
+
+      <p>
+        圆角阶梯：
+        <code>4px</code> 用于徽标和标签，
+        <code>6px</code> 用于小按钮和输入框，
+        <code>8px</code> 用于标准按钮、输入框、卡片，
+        <code>10–12px</code> 用于大卡片和面板，
+        <code>14px</code> 用于模态框。
+      </p>
+
+      <h2>动效</h2>
+
+      <p>
+        动效是 AuraDesign 里最容易被忽视、也最容易被做坏的部分。
+        原则很简单：<em>如果动效不能让用户更快理解发生了什么，就不该存在。</em>
+      </p>
+
+      <p>
+        微交互（悬停、按下）用 120–180ms；组件出现与消失用 200–260ms；
+        布局变化用 280–360ms。统一使用 <code>cubic-bezier(0.22, 1, 0.36, 1)</code> 缓出曲线。
+        不做弹跳，不做旋转，不做超过 1.04 倍的缩放。
+      </p>
+
+      <h2>什么时候不该用 AuraDesign</h2>
+
+      <p>
+        这套语言是为<strong>工具型界面</strong>设计的。它不适合：
+      </p>
+
+      <ul class="not-for">
+        <li>品牌落地页——它们需要更强的情绪表达，需要更大的颜色对比。</li>
+        <li>儿童、教育类产品——它们需要更活泼的色彩和更圆润的形状。</li>
+        <li>数据可视化——需要依靠颜色区分维度时，应该另建一套可视化色板。</li>
+        <li>游戏界面——游戏需要更强的沉浸感和视觉冲击。</li>
+      </ul>
+
+      <p>
+        在这些场景里使用 AuraDesign，你会觉得它「不够有性格」。
+        那不是它的失败，而是它的边界。
+      </p>
+
+      <h2>写在最后</h2>
+
+      <p>
+        最好的界面是让人记不住的界面。用户不会记得你的按钮有几个像素的圆角，
+        他只会记得「刚才那个操作挺顺的」。
+      </p>
+
+      <p>
+        AuraDesign 不会让任何一个人惊叹。但如果它能让界面少一点干扰、多一点安静，
+        那它就已经完成了自己的任务。
+      </p>
+
+      <div class="article-end">
+        AuraDesign · 让界面安静一点。
+      </div>
+
+    </article>
+
+  </section>
+
+  <!-- ============================================================
+       Tab 2 · 组件库
+       ============================================================ -->
+  <section class="tab-panel" id="tab-components">
+    <div class="components-layout">
+
+      <aside class="side-nav" id="sideNav">
+
+        <div class="side-group">
+          <div class="side-group-title">基础</div>
+          <a class="side-link" href="#c-btn">按钮</a>
+          <a class="side-link" href="#c-link">链接</a>
+          <a class="side-link" href="#c-tag">标签与徽标</a>
+        </div>
+
+        <div class="side-group">
+          <div class="side-group-title">表单</div>
+          <a class="side-link" href="#c-input">输入框</a>
+          <a class="side-link" href="#c-select">选择器</a>
+          <a class="side-link" href="#c-switch">开关</a>
+          <a class="side-link" href="#c-checkbox">复选框</a>
+        </div>
+
+        <div class="side-group">
+          <div class="side-group-title">展示</div>
+          <a class="side-link" href="#c-card">卡片</a>
+          <a class="side-link" href="#c-avatar">头像</a>
+          <a class="side-link" href="#c-progress">进度条</a>
+          <a class="side-link" href="#c-divider">分隔线</a>
+        </div>
+
+        <div class="side-group">
+          <div class="side-group-title">反馈</div>
+          <a class="side-link" href="#c-alert">通知</a>
+          <a class="side-link" href="#c-modal">模态框</a>
+          <a class="side-link" href="#c-tooltip">工具提示</a>
+        </div>
+
+        <div class="side-group">
+          <div class="side-group-title">导航</div>
+          <a class="side-link" href="#c-tabs">标签页</a>
+          <a class="side-link" href="#c-breadcrumb">面包屑</a>
+          <a class="side-link" href="#c-pagination">分页</a>
+        </div>
+
+        <div class="side-group">
+          <div class="side-group-title">复合</div>
+          <a class="side-link" href="#c-accordion">手风琴</a>
+        </div>
+
+      </aside>
+
+      <div class="components-content">
+
+        <!-- 按钮 -->
+        <section class="comp-section" id="c-btn">
+          <div class="comp-eyebrow">Basic</div>
+          <h2 class="comp-title">按钮</h2>
+          <p class="comp-desc">
+            按钮是界面中唯一允许使用大面积强调色的组件。主要按钮每个视图不超过一个。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">主要 · 默认</span>
+              <button class="btn btn-primary" type="button">
+                <i class="fas fa-arrow-right"></i>主要操作
+              </button>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">主要 · 悬停</span>
+              <button class="btn btn-primary is-hover" type="button">
+                <i class="fas fa-arrow-right"></i>主要操作
+              </button>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">主要 · 按下</span>
+              <button class="btn btn-primary is-active" type="button">
+                <i class="fas fa-arrow-right"></i>主要操作
+              </button>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">主要 · 禁用</span>
+              <button class="btn btn-primary" type="button" disabled>
+                <i class="fas fa-arrow-right"></i>主要操作
+              </button>
+            </div>
+          </div>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">幽灵 · 默认</span>
+              <button class="btn btn-ghost" type="button">次要操作</button>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">幽灵 · 悬停</span>
+              <button class="btn btn-ghost is-hover" type="button">次要操作</button>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">幽灵 · 禁用</span>
+              <button class="btn btn-ghost" type="button" disabled>次要操作</button>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;button class="btn btn-primary"&gt;主要操作&lt;/button&gt;
+&lt;button class="btn btn-ghost"&gt;次要操作&lt;/button&gt;
+&lt;button class="btn btn-ghost" disabled&gt;次要操作&lt;/button&gt;</pre>
+        </section>
+
+        <!-- 链接 -->
+        <section class="comp-section" id="c-link">
+          <div class="comp-eyebrow">Basic</div>
+          <h2 class="comp-title">链接</h2>
+          <p class="comp-desc">
+            链接使用强调色，但只在悬停时显示下划线。已访问的链接降为次文字色。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <a class="link" href="#!">查看详情</a>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">悬停（下划线）</span>
+              <a class="link" href="#!" style="text-decoration:underline">查看详情</a>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">已访问</span>
+              <a class="link" href="#!" style="color:var(--text-2)">查看详情</a>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">禁用</span>
+              <a class="link is-disabled" href="#!">查看详情</a>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;a class="link" href="#"&gt;查看详情&lt;/a&gt;
+&lt;a class="link is-disabled"&gt;查看详情&lt;/a&gt;</pre>
+        </section>
+
+        <!-- 标签与徽标 -->
+        <section class="comp-section" id="c-tag">
+          <div class="comp-eyebrow">Basic</div>
+          <h2 class="comp-title">标签与徽标</h2>
+          <p class="comp-desc">
+            标签用于分类和状态，徽标用于计数或提示未读。两者都不使用强调色以外的颜色，
+            除非语义明确。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">标签</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span class="tag"><i class="fas fa-tag"></i>默认</span>
+                <span class="tag tag-outline">轮廓</span>
+                <span class="tag tag-accent">强调</span>
+                <span class="tag tag-ok">成功</span>
+                <span class="tag tag-danger">错误</span>
+              </div>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">徽标</span>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="badge">3</span>
+                <span class="badge">99+</span>
+                <span class="badge-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;span class="tag"&gt;默认&lt;/span&gt;
+&lt;span class="tag tag-accent"&gt;强调&lt;/span&gt;
+&lt;span class="badge"&gt;3&lt;/span&gt;</pre>
+        </section>
+
+        <!-- 输入框 -->
+        <section class="comp-section" id="c-input">
+          <div class="comp-eyebrow">Form</div>
+          <h2 class="comp-title">输入框</h2>
+          <p class="comp-desc">
+            输入框使用背景色 + 细边框的组合。聚焦时出现 3px 的强调色光晕，不使用描边动画。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">默认</span>
+              <input class="input" type="text" placeholder="请输入内容" />
+            </div>
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">聚焦</span>
+              <input class="input is-focus" type="text" value="正在输入…" />
+            </div>
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">错误</span>
+              <input class="input is-error" type="text" value="格式不正确" />
+            </div>
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">禁用</span>
+              <input class="input" type="text" value="不可编辑" disabled />
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;input class="input" type="text" placeholder="请输入内容" /&gt;
+&lt;input class="input is-focus" type="text" value="正在输入…" /&gt;
+&lt;input class="input is-error" type="text" value="格式不正确" /&gt;
+&lt;input class="input" type="text" value="不可编辑" disabled /&gt;</pre>
+        </section>
+
+        <!-- 选择器 -->
+        <section class="comp-section" id="c-select">
+          <div class="comp-eyebrow">Form</div>
+          <h2 class="comp-title">选择器</h2>
+          <p class="comp-desc">
+            原生 <code>select</code> 重置外观，右侧使用 CSS 绘制的箭头，与输入框视觉一致。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">默认</span>
+              <div class="select-wrap">
+                <select class="select">
+                  <option>选择一项</option>
+                  <option>选项一</option>
+                  <option>选项二</option>
+                  <option>选项三</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="select-wrap"&gt;
+  &lt;select class="select"&gt;
+    &lt;option&gt;选择一项&lt;/option&gt;
+  &lt;/select&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 开关 -->
+        <section class="comp-section" id="c-switch">
+          <div class="comp-eyebrow">Form</div>
+          <h2 class="comp-title">开关</h2>
+          <p class="comp-desc">
+            开关用于即时生效的二元设置。关闭时轨道为表面色，开启时为强调色软背景 + 强调色滑块。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">关闭</span>
+              <label class="switch">
+                <input type="checkbox" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label">接收通知</span>
+              </label>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">开启</span>
+              <label class="switch">
+                <input type="checkbox" checked />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label">接收通知</span>
+              </label>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">禁用</span>
+              <label class="switch">
+                <input type="checkbox" disabled />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label">接收通知</span>
+              </label>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;label class="switch"&gt;
+  &lt;input type="checkbox" checked /&gt;
+  &lt;span class="switch-track"&gt;&lt;span class="switch-thumb"&gt;&lt;/span&gt;&lt;/span&gt;
+  &lt;span class="switch-label"&gt;接收通知&lt;/span&gt;
+&lt;/label&gt;</pre>
+        </section>
+
+        <!-- 复选框 -->
+        <section class="comp-section" id="c-checkbox">
+          <div class="comp-eyebrow">Form</div>
+          <h2 class="comp-title">复选框</h2>
+          <p class="comp-desc">
+            复选框使用 4px 圆角的小方块。选中时填充强调色，勾选图标使用矢量。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">未选</span>
+              <label class="checkbox">
+                <input type="checkbox" />
+                <span class="checkbox-box"><i class="fas fa-check"></i></span>
+                <span>记住我</span>
+              </label>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">已选</span>
+              <label class="checkbox">
+                <input type="checkbox" checked />
+                <span class="checkbox-box"><i class="fas fa-check"></i></span>
+                <span>记住我</span>
+              </label>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">禁用</span>
+              <label class="checkbox">
+                <input type="checkbox" disabled />
+                <span class="checkbox-box"><i class="fas fa-check"></i></span>
+                <span>记住我</span>
+              </label>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;label class="checkbox"&gt;
+  &lt;input type="checkbox" checked /&gt;
+  &lt;span class="checkbox-box"&gt;&lt;i class="fas fa-check"&gt;&lt;/i&gt;&lt;/span&gt;
+  &lt;span&gt;记住我&lt;/span&gt;
+&lt;/label&gt;</pre>
+        </section>
+
+        <!-- 卡片 -->
+        <section class="comp-section" id="c-card">
+          <div class="comp-eyebrow">Display</div>
+          <h2 class="comp-title">卡片</h2>
+          <p class="comp-desc">
+            卡片是内容的容器。默认只有一条细边框，悬停时增加浅阴影和 2px 上浮。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <div class="card-demo">
+                <div class="card-demo-title">项目名称</div>
+                <div class="card-demo-text">简短说明文字，用于描述卡片内的主要内容。</div>
+              </div>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">悬停</span>
+              <div class="card-demo" style="border-color:var(--line-strong);box-shadow:var(--shadow-md);transform:translateY(-2px)">
+                <div class="card-demo-title">项目名称</div>
+                <div class="card-demo-text">简短说明文字，用于描述卡片内的主要内容。</div>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="card"&gt;
+  &lt;div class="card-title"&gt;项目名称&lt;/div&gt;
+  &lt;div class="card-text"&gt;简短说明文字&lt;/div&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 头像 -->
+        <section class="comp-section" id="c-avatar">
+          <div class="comp-eyebrow">Display</div>
+          <h2 class="comp-title">头像</h2>
+          <p class="comp-desc">
+            头像使用圆角方形而非圆形（除非是用户真实照片）。默认使用强调色软背景 + 首字母。
+            头像组用 2px 表面色描边分隔，避免重叠时糊在一起。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">尺寸</span>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div class="avatar-demo avatar-sm">A</div>
+                <div class="avatar-demo">A</div>
+                <div class="avatar-demo avatar-lg">A</div>
+              </div>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">头像组（重叠 + 表面色描边）</span>
+              <div class="avatar-group">
+                <div class="avatar-demo">A</div>
+                <div class="avatar-demo">B</div>
+                <div class="avatar-demo">C</div>
+                <div class="avatar-demo" style="background:var(--surface-2);color:var(--text-3)">+3</div>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="avatar"&gt;A&lt;/div&gt;
+&lt;div class="avatar avatar-lg"&gt;A&lt;/div&gt;
+
+&lt;div class="avatar-group"&gt;
+  &lt;div class="avatar"&gt;A&lt;/div&gt;
+  &lt;div class="avatar"&gt;B&lt;/div&gt;
+  &lt;div class="avatar"&gt;C&lt;/div&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 进度条 -->
+        <section class="comp-section" id="c-progress">
+          <div class="comp-eyebrow">Display</div>
+          <h2 class="comp-title">进度条</h2>
+          <p class="comp-desc">
+            进度条只有 3px 高，使用强调色填充。没有渐变，没有条纹动画。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">进行中</span>
+              <div class="progress-track"><div class="progress-fill" style="width:62%"></div></div>
+            </div>
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">完成</span>
+              <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+            </div>
+            <div class="demo-item" style="width:220px">
+              <span class="demo-label">等待</span>
+              <div class="progress-track"><div class="progress-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="progress-track"&gt;
+  &lt;div class="progress-fill" style="width:62%"&gt;&lt;/div&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 分隔线 -->
+        <section class="comp-section" id="c-divider">
+          <div class="comp-eyebrow">Display</div>
+          <h2 class="comp-title">分隔线</h2>
+          <p class="comp-desc">
+            分隔线是 1px 的线条，使用最低透明度的边框色。能用间距区分的地方就不加分隔线。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">水平</span>
+              <div class="divider-demo"></div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="divider"&gt;&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 通知 -->
+        <section class="comp-section" id="c-alert">
+          <div class="comp-eyebrow">Feedback</div>
+          <h2 class="comp-title">通知</h2>
+          <p class="comp-desc">
+            通知用于展示页面级的提示信息。四种语义色都使用软背景 + 深文字，不刺眼。
+          </p>
+
+          <div class="demo-row" style="flex-direction:column;align-items:stretch">
+            <div class="alert-demo">
+              <i class="fas fa-circle-info"></i>
+              <span>这是一条普通通知，用于提示用户一些信息。</span>
+            </div>
+            <div class="alert-demo alert-info">
+              <i class="fas fa-circle-info"></i>
+              <span><strong>提示：</strong>这是一条强调通知。</span>
+            </div>
+            <div class="alert-demo alert-ok">
+              <i class="fas fa-circle-check"></i>
+              <span><strong>成功：</strong>操作已完成。</span>
+            </div>
+            <div class="alert-demo alert-warn">
+              <i class="fas fa-triangle-exclamation"></i>
+              <span><strong>警告：</strong>请检查输入内容。</span>
+            </div>
+            <div class="alert-demo alert-error">
+              <i class="fas fa-circle-xmark"></i>
+              <span><strong>错误：</strong>操作失败，请重试。</span>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="alert alert-info"&gt;
+  &lt;i class="fas fa-circle-info"&gt;&lt;/i&gt;
+  &lt;span&gt;提示信息&lt;/span&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 模态框 -->
+        <section class="comp-section" id="c-modal">
+          <div class="comp-eyebrow">Feedback</div>
+          <h2 class="comp-title">模态框</h2>
+          <p class="comp-desc">
+            模态框使用 12px 圆角、深阴影，背景遮罩为 42% 透明度的深色。按钮顺序：取消在左，确认在右。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <div class="modal-preview">
+                <div class="modal-preview-title">确认删除</div>
+                <div class="modal-preview-text">此操作不可撤销，确定要删除这个项目吗？</div>
+                <div class="modal-preview-actions">
+                  <button class="btn btn-ghost" type="button">取消</button>
+                  <button class="btn btn-primary" type="button">确认删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="modal"&gt;
+  &lt;div class="modal-title"&gt;确认删除&lt;/div&gt;
+  &lt;div class="modal-text"&gt;此操作不可撤销…&lt;/div&gt;
+  &lt;div class="modal-actions"&gt;
+    &lt;button class="btn btn-ghost"&gt;取消&lt;/button&gt;
+    &lt;button class="btn btn-primary"&gt;确认删除&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 工具提示 -->
+        <section class="comp-section" id="c-tooltip">
+          <div class="comp-eyebrow">Feedback</div>
+          <h2 class="comp-title">工具提示</h2>
+          <p class="comp-desc">
+            工具提示使用深色气泡 + 小三角箭头。悬停或键盘聚焦时显示，出现时只做透明度与 4px 位移过渡。
+            下方按钮可以直接悬停查看效果。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">静态展示</span>
+              <div class="tooltip-preview">
+                <div class="tooltip-bubble">这是一个提示</div>
+              </div>
+            </div>
+            <div class="demo-item">
+              <span class="demo-label">悬停 / 聚焦触发</span>
+              <span class="tooltip-trigger">
+                <button class="btn btn-ghost" type="button">
+                  <i class="fas fa-circle-info"></i>悬停查看
+                </button>
+                <span class="tooltip-bubble">这是一个提示</span>
+              </span>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;span class="tooltip-trigger"&gt;
+  &lt;button class="btn btn-ghost"&gt;悬停查看&lt;/button&gt;
+  &lt;span class="tooltip-bubble"&gt;这是一个提示&lt;/span&gt;
+&lt;/span&gt;</pre>
+        </section>
+
+        <!-- 标签页 -->
+        <section class="comp-section" id="c-tabs">
+          <div class="comp-eyebrow">Navigation</div>
+          <h2 class="comp-title">标签页</h2>
+          <p class="comp-desc">
+            标签页使用分段式切换器，与顶部导航的样式保持一致。激活项使用表面色背景 + 浅阴影。
+            下方示例可以直接点击切换。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <div class="mini-tabs" data-tabs>
+                <button class="mini-tab active" type="button">全部</button>
+                <button class="mini-tab" type="button">进行中</button>
+                <button class="mini-tab" type="button">已完成</button>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="tabs"&gt;
+  &lt;button class="tab active"&gt;全部&lt;/button&gt;
+  &lt;button class="tab"&gt;进行中&lt;/button&gt;
+  &lt;button class="tab"&gt;已完成&lt;/button&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 面包屑 -->
+        <section class="comp-section" id="c-breadcrumb">
+          <div class="comp-eyebrow">Navigation</div>
+          <h2 class="comp-title">面包屑</h2>
+          <p class="comp-desc">
+            面包屑用于表达页面层级。当前页使用主文字色，上级链接在悬停时加深。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <nav class="crumbs">
+                <a href="#!">首页</a>
+                <span class="crumb-sep"><i class="fas fa-chevron-right"></i></span>
+                <a href="#!">项目</a>
+                <span class="crumb-sep"><i class="fas fa-chevron-right"></i></span>
+                <span class="crumb-current">AuraDesign</span>
+              </nav>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;nav class="crumbs"&gt;
+  &lt;a href="#"&gt;首页&lt;/a&gt;
+  &lt;span class="crumb-sep"&gt;›&lt;/span&gt;
+  &lt;span class="crumb-current"&gt;AuraDesign&lt;/span&gt;
+&lt;/nav&gt;</pre>
+        </section>
+
+        <!-- 分页 -->
+        <section class="comp-section" id="c-pagination">
+          <div class="comp-eyebrow">Navigation</div>
+          <h2 class="comp-title">分页</h2>
+          <p class="comp-desc">
+            分页按钮使用 6px 圆角方块，激活项使用强调色软背景 + 强调色文字。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item">
+              <span class="demo-label">默认</span>
+              <div class="pager">
+                <button class="pager-btn" type="button" disabled><i class="fas fa-chevron-left"></i></button>
+                <button class="pager-btn active" type="button">1</button>
+                <button class="pager-btn" type="button">2</button>
+                <button class="pager-btn" type="button">3</button>
+                <button class="pager-btn" type="button">4</button>
+                <button class="pager-btn" type="button"><i class="fas fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="pager"&gt;
+  &lt;button class="pager-btn"&gt;1&lt;/button&gt;
+  &lt;button class="pager-btn active"&gt;2&lt;/button&gt;
+  &lt;button class="pager-btn"&gt;3&lt;/button&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+        <!-- 手风琴 -->
+        <section class="comp-section" id="c-accordion">
+          <div class="comp-eyebrow">Composite</div>
+          <h2 class="comp-title">手风琴</h2>
+          <p class="comp-desc">
+            手风琴用于折叠内容。展开状态由箭头旋转 180° 表示，过渡曲线使用缓出。
+          </p>
+
+          <div class="demo-row">
+            <div class="demo-item" style="width:100%">
+              <span class="demo-label">展开 / 收起</span>
+              <div class="accordion">
+                <div class="accordion-item open">
+                  <button class="accordion-head" type="button" data-accordion>
+                    <span>如何快速上手 AuraDesign？</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <div class="accordion-body">
+                    从组件库开始。每个组件都提供了状态示例和代码片段，
+                    直接复制使用即可。
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <button class="accordion-head" type="button" data-accordion>
+                    <span>可以自定义强调色吗？</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <div class="accordion-body">
+                    可以。修改 <code>--accent</code> 令牌即可，但请保证对比度不低于 4.5:1。
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <button class="accordion-head" type="button" data-accordion>
+                    <span>为什么没有渐变背景？</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                  <div class="accordion-body">
+                    渐变会增加视觉噪音。在工具型界面中，纯色 + 细线条就足够表达结构。
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <pre class="code-block">&lt;div class="accordion"&gt;
+  &lt;div class="accordion-item open"&gt;
+    &lt;button class="accordion-head"&gt;标题&lt;/button&gt;
+    &lt;div class="accordion-body"&gt;内容&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+        </section>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================
+       Tab 3 · 使用指南（引入 aura.css）
+       ============================================================ -->
+  <section class="tab-panel" id="tab-guide">
+
+    <article class="article">
+
+      <span class="article-kicker">Getting Started</span>
+
+      <h1 class="article-title">引入 aura.css</h1>
+      <p class="article-subtitle">一份 CSS 文件，一次引入，立刻获得整套 AuraDesign 风格。</p>
+
+      <div class="article-meta">
+        <span><i class="fas fa-file-code"></i>单文件 CSS</span>
+        <span><i class="fas fa-clock"></i>约 6 分钟上手</span>
+        <span><i class="fas fa-bolt"></i>零构建依赖</span>
+      </div>
+
+      <p class="article-lead">
+        你不需要复制令牌、不需要手写按钮样式。
+        把 <code>aura.css</code> 放进项目，在 <code>&lt;head&gt;</code> 里引一次，
+        然后在 HTML 里使用组件类名即可。
+      </p>
+
+      <h2>文件放在哪里</h2>
+
+      <p>
+        推荐把 <code>aura.css</code> 放在项目的 <code>css/</code> 目录下，
+        与页面入口文件保持相对路径清晰。<br>
+        你可以前往 github.com/linxianlww/linxianlww.github.io 获取 css 文件。
+      </p>
+
+      <pre class="code-block">project/
+├── index.html
+├── css/
+│   └── aura.css        ← 引入这一份即可
+└── js/
+    └── theme.js        ← 可选：深色模式切换</pre>
+
+      <p>
+        如果你把 CSS 放在其他位置，只需保证 <code>&lt;link&gt;</code> 的
+        <code>href</code> 指向正确路径。
+      </p>
+
+      <h2>第一步：在 &lt;head&gt; 中引入</h2>
+
+      <p>
+        在页面的 <code>&lt;head&gt;</code> 中引入 <code>aura.css</code>。
+        它应该排在业务样式之前，方便后续按需覆盖。
+      </p>
+
+      <pre class="code-block">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8" /&gt;
+  &lt;meta name="viewport"
+        content="width=device-width, initial-scale=1" /&gt;
+  &lt;title&gt;我的页面&lt;/title&gt;
+
+  &lt;!-- AuraDesign 样式 --&gt;
+  &lt;link rel="stylesheet" href="css/aura.css" /&gt;
+
+  &lt;!-- 可选：业务样式，写在 aura.css 之后 --&gt;
+  &lt;link rel="stylesheet" href="css/app.css" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;!-- 页面内容 --&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+      <div class="callout">
+        <i class="fas fa-lightbulb"></i>
+        <span><strong>顺序很重要：</strong><code>aura.css</code> 先引入，
+        业务样式后引入。这样你在 <code>app.css</code> 里写的规则
+        可以覆盖默认样式，而不需要提高选择器权重。</span>
+      </div>
+
+      <h2>第二步：直接使用组件类名</h2>
+
+      <p>
+        引入之后，所有组件类名都可以直接使用。例如按钮、输入框和卡片：
+      </p>
+
+      <pre class="code-block">&lt;div class="card"&gt;
+  &lt;div class="card-title"&gt;项目名称&lt;/div&gt;
+  &lt;div class="card-text"&gt;简短说明文字。&lt;/div&gt;
+
+  &lt;input class="input" type="text"
+         placeholder="请输入内容" /&gt;
+
+  &lt;div style="margin-top:12px;display:flex;gap:8px;"&gt;
+    &lt;button class="btn btn-primary"&gt;保存&lt;/button&gt;
+    &lt;button class="btn btn-ghost"&gt;取消&lt;/button&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</pre>
+
+      <p>
+        类名不需要额外包装，也不需要初始化脚本。组件库 Tab 中的每个示例
+        都可以直接粘贴到页面里使用。
+      </p>
+
+      <h2>第三步：可选资源</h2>
+
+      <p>
+        <code>aura.css</code> 不依赖任何外部文件。但以下两项可以提升完整效果，
+        按需引入：
+      </p>
+
+      <h3>字体</h3>
+
+      <p>
+        主字体 <strong>Inter</strong>，等宽字体 <strong>JetBrains Mono</strong>。
+        不引入也能正常使用，只是会回退到系统字体。
+      </p>
+
+      <pre class="code-block">&lt;link rel="preconnect"
+      href="https://fonts.googleapis.com" /&gt;
+&lt;link rel="preconnect"
+      href="https://fonts.gstatic.com" crossorigin /&gt;
+&lt;link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet" /&gt;</pre>
+
+      <h3>图标</h3>
+
+      <p>
+        组件里使用的图标来自 Font Awesome 6。如果不引入，
+        图标位置会留空，但组件布局不受影响。
+      </p>
+
+      <pre class="code-block">&lt;link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" /&gt;</pre>
+
+      <h2>第四步：深色模式</h2>
+
+      <p>
+        深色模式已经写在 <code>aura.css</code> 里，通过 <code>html.dark</code>
+        生效。你只需要在页面加载时决定是否加上这个类名。
+      </p>
+
+      <p>
+        把下面这段脚本放在 <code>&lt;head&gt;</code> 中——
+        注意是在 <code>aura.css</code> 之后、<code>&lt;body&gt;</code> 之前。
+        提前执行可以避免页面先以浅色渲染再切换的闪烁。
+      </p>
+
+      <pre class="code-block">&lt;script&gt;
+  (function () {
+    var saved = localStorage.getItem('aura-theme');
+    var prefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+
+    if (saved === 'dark' || (!saved &amp;&amp; prefersDark)) {
+      document.documentElement.classList.add('dark');
+    }
+  })();
+&lt;/script&gt;</pre>
+
+      <p>
+        如果你需要提供手动切换入口，再加一个按钮和几行事件处理：
+      </p>
+
+      <pre class="code-block">&lt;button class="icon-btn"
+        id="themeToggle"
+        aria-label="切换主题"&gt;切换&lt;/button&gt;
+
+&lt;script&gt;
+  document.getElementById('themeToggle')
+    .addEventListener('click', function () {
+      document.documentElement.classList.toggle('dark');
+
+      var isDark = document.documentElement
+        .classList.contains('dark');
+
+      localStorage.setItem(
+        'aura-theme',
+        isDark ? 'dark' : 'light'
+      );
+    });
+&lt;/script&gt;</pre>
+
+      <h2>一个完整的最小页面</h2>
+
+      <p>
+        把前面几步组合起来，就是下面这个文件。保存为 <code>index.html</code>，
+        与 <code>css/aura.css</code> 放在同一目录下，即可直接打开。
+      </p>
+
+      <pre class="code-block">&lt;!DOCTYPE html&gt;
+&lt;html lang="zh-CN"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8" /&gt;
+  &lt;meta name="viewport"
+        content="width=device-width, initial-scale=1" /&gt;
+  &lt;title&gt;AuraDesign Demo&lt;/title&gt;
+
+  &lt;!-- 1. 先执行深色模式判定，避免闪烁 --&gt;
+  &lt;script&gt;
+    (function () {
+      var saved = localStorage.getItem('aura-theme');
+      var prefersDark = window.matchMedia(
+        '(prefers-color-scheme: dark)'
+      ).matches;
+      if (saved === 'dark' || (!saved &amp;&amp; prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  &lt;/script&gt;
+
+  &lt;!-- 2. 引入 AuraDesign --&gt;
+  &lt;link rel="stylesheet" href="css/aura.css" /&gt;
+&lt;/head&gt;
+&lt;body style="padding:40px 24px;"&gt;
+
+  &lt;div class="aura-container"&gt;
+    &lt;div class="card"&gt;
+      &lt;div class="card-title"&gt;AuraDesign&lt;/div&gt;
+      &lt;div class="card-text"&gt;
+        一个克制、成熟的界面设计语言。
+      &lt;/div&gt;
+
+      &lt;div style="margin-top:16px;
+                  display:flex;
+                  gap:8px;"&gt;
+        &lt;button class="btn btn-primary"&gt;开始使用&lt;/button&gt;
+        &lt;button class="btn btn-ghost"
+                id="themeToggle"&gt;切换主题&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 3. 可选：手动切换主题 --&gt;
+  &lt;script&gt;
+    document.getElementById('themeToggle')
+      .addEventListener('click', function () {
+        document.documentElement.classList.toggle('dark');
+        var isDark = document.documentElement
+          .classList.contains('dark');
+        localStorage.setItem(
+          'aura-theme',
+          isDark ? 'dark' : 'light'
+        );
+      });
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+
+      <p>
+        这段示例只依赖 <code>aura.css</code>，不需要任何构建工具，
+        也不需要额外引入字体或图标。
+      </p>
+
+      <h2>常见问题</h2>
+
+      <h3>样式没有生效怎么办？</h3>
+
+      <p>
+        依次检查三件事：第一，<code>&lt;link&gt;</code> 的路径是否正确；
+        第二，浏览器开发者工具中是否成功加载了 <code>aura.css</code>；
+        第三，是否被业务样式覆盖。最常见的原因是路径写错，
+        或者 <code>aura.css</code> 被放在了业务样式之后。
+      </p>
+
+      <h3>深色模式不生效？</h3>
+
+      <p>
+        检查 <code>html</code> 上是否真的有 <code>dark</code> 类名，
+        以及初始化脚本是否放在 <code>&lt;head&gt;</code> 中执行。
+        如果脚本放在 <code>&lt;body&gt;</code> 底部，页面会先渲染浅色，
+        再切换深色，出现明显闪烁。
+      </p>
+
+      <h3>可以改强调色吗？</h3>
+
+      <p>
+        可以。在业务样式里覆盖变量即可，不需要改 <code>aura.css</code>：
+      </p>
+
+      <pre class="code-block">/* 放在业务样式中，aura.css 之后 */
+:root {
+  --accent:      #7c3aed;
+  --accent-soft: rgba(124, 58, 237, 0.10);
+}
+
+html.dark {
+  --accent:      #a78bfa;
+  --accent-soft: rgba(167, 139, 250, 0.14);
+}</pre>
+
+      <p>
+        注意保持强调色与背景的对比度不低于 4.5:1，
+        深色模式下的强调色通常需要更亮。
+      </p>
+
+      <h3>类名冲突怎么办？</h3>
+
+      <p>
+        <code>aura.css</code> 的类名（如 <code>.btn</code>、
+        <code>.card</code>、<code>.input</code>）比较短，可能与现有项目冲突。
+        两种处理方式：
+      </p>
+
+      <ul class="list">
+        <li>给 <code>aura.css</code> 里的类名统一加前缀，例如 <code>.aura-btn</code>，
+            再同步修改 HTML 中的类名；</li>
+        <li>在业务样式中提高选择器优先级，覆盖掉冲突的部分。</li>
+      </ul>
+
+      <h3>需要引入 JavaScript 吗？</h3>
+
+      <p>
+        不需要。所有组件都是纯 CSS。只有深色模式切换需要几行 JS，
+        而是否使用切换入口完全由你决定。
+      </p>
+
+      <div class="article-end">
+        AuraDesign · 引入一份 CSS，开始使用。
+      </div>
+
+    </article>
+
+  </section>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     主题切换
+     ============================================================ */
+  var themeToggle = document.getElementById('themeToggle');
+  var themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
+
+  function syncThemeIcon() {
+    if (!themeIcon) return;
+    themeIcon.className = document.documentElement.classList.contains('dark')
+      ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  syncThemeIcon();
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      document.documentElement.classList.toggle('dark');
+      try {
+        localStorage.setItem('aura-theme',
+          document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      } catch (e) {}
+      syncThemeIcon();
+    });
+  }
+
+  /* ============================================================
+     Tab 切换
+     ============================================================ */
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+
+  function setTab(name) {
+    panels.forEach(function (panel) {
+      panel.classList.toggle('active', panel.id === 'tab-' + name);
+    });
+    tabBtns.forEach(function (btn) {
+      var isActive = btn.dataset.tab === name;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (name === 'components') {
+      setTimeout(updateActiveSideLink, 400);
+    }
+  }
+
+  tabBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setTab(btn.dataset.tab);
+    });
+  });
+
+  /* ============================================================
+     侧边导航高亮
+     ============================================================ */
+  var sideLinks = document.querySelectorAll('.side-link');
+  var sections = [];
+
+  sideLinks.forEach(function (link) {
+    var href = link.getAttribute('href');
+    if (href && href.charAt(0) === '#') {
+      var el = document.querySelector(href);
+      if (el) sections.push({ link: link, el: el });
+    }
+  });
+
+  function updateActiveSideLink() {
+    var scrollPos = window.scrollY + 140;
+    var current = null;
+
+    for (var i = 0; i < sections.length; i++) {
+      var top = sections[i].el.getBoundingClientRect().top + window.scrollY;
+      if (top <= scrollPos) current = sections[i];
+      else break;
+    }
+
+    if (!current && sections.length) current = sections[0];
+
+    sideLinks.forEach(function (l) { l.classList.remove('active'); });
+    if (current) {
+      current.link.classList.add('active');
+      try {
+        current.link.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      } catch (e) {}
+    }
+  }
+
+  var ticking = false;
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      window.requestAnimationFrame(function () {
+        var compPanel = document.getElementById('tab-components');
+        if (compPanel && compPanel.classList.contains('active')) {
+          updateActiveSideLink();
+        }
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+
+  /* 初始高亮 */
+  if (sections.length) {
+    sideLinks.forEach(function (l) { l.classList.remove('active'); });
+    sections[0].link.classList.add('active');
+  }
+
+  /* ============================================================
+     手风琴交互
+     ============================================================ */
+  document.querySelectorAll('[data-accordion]').forEach(function (head) {
+    head.addEventListener('click', function () {
+      var item = head.closest('.accordion-item');
+      if (!item) return;
+      item.classList.toggle('open');
+    });
+  });
+
+  /* ============================================================
+     迷你标签页切换（组件库示例）
+     ============================================================ */
+  document.querySelectorAll('[data-tabs]').forEach(function (group) {
+    group.querySelectorAll('.mini-tab').forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        group.querySelectorAll('.mini-tab').forEach(function (t) {
+          t.classList.remove('active');
+        });
+        tab.classList.add('active');
+      });
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

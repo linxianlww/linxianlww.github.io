@@ -1,589 +1,965 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>时间 TIMER - 咏叹调 Aria</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            border: none;
-            outline: none;
-        }
-        html, body {
-            height: 100%;
-            position: relative;
-        }
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a0c10;
-            z-index: -2;
-        }
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: -1;
-            pointer-events: none;
-        }
-        .fog {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.025);
-            pointer-events: none;
-            z-index: 1;
-            animation: fog-float 25s linear infinite;
-            opacity: 0.3;
-        }
-        @keyframes fog-float {
-            0% { transform: translateY(10px); opacity: 0.2; }
-            50% { transform: translateY(-10px); opacity: 0.4; }
-            100% { transform: translateY(10px); opacity: 0.2; }
-        }
-        .rain-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 0;
-            overflow: hidden;
-        }
-        .rain {
-            position: absolute;
-            background: linear-gradient(to top, 
-              rgba(255,255,255,0.95) 0%, 
-              rgba(255,255,255,0.6) 50%, 
-              rgba(255,255,255,0) 100%
-            );
-            width: 1.8px;
-            height: 85px;
-            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-            opacity: 0.85;
-            animation: rain-rise linear infinite;
-        }
-        @keyframes rain-rise {
-            0% { transform: translateY(100vh); opacity: 0; }
-            10% { opacity: 1; }
-            100% { transform: translateY(-100vh); opacity: 0; }
-        }
-        .splash {
-            position: fixed;
-            width: 8px;
-            height: 8px;
-            background: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 20;
-            animation: splash-animation 0.6s ease-out forwards;
-        }
-        @keyframes splash-animation {
-            0% { opacity: 1; transform: scale(0.2); }
-            50% { opacity: 0.8; transform: scale(1.2); }
-            100% { opacity: 0; transform: scale(1.8); }
-        }
-        body {
-            font-family: "SimSun", "宋体", serif;
-            color: #e2e8f0;
-            line-height: 1.8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-            padding: 20px;
-            padding-bottom: 80px;
-        }
-        .glass {
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 10;
-            border: 1px solid #1e293b;
-        }
-        .center-main {
-            width: 100%;
-            max-width: 620px;
-            padding: 2.5rem;
-            border-radius: 10px;
-        }
-        .setting-inner {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        .setting-title {
-            font-size: 1.7rem;
-            color: #4299e1;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #1e293b;
-            width: fit-content;
-            margin: 0 auto;
-            letter-spacing: 1px;
-        }
-        .time-input {
-            width: 100%;
-            padding: 1rem;
-            border-radius: 6px;
-            background: rgba(30, 41, 59, 0.7);
-            color: #e2e8f0;
-            font-size: 1rem;
-            font-family: "SimSun", "宋体", serif;
-            border: 1px solid #1e293b;
-            transition: 0.3s;
-            text-align: center;
-        }
-        .time-input:focus {
-            border-color: #4299e1;
-            background: rgba(30, 41, 59, 0.8);
-        }
-        .sound-switch {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            color: #cbd5e1;
-            font-size: 1rem;
-        }
-        .sound-switch input {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        .btn-group {
-            display: flex;
-            gap: 16px;
-            width: 100%;
-        }
-        .md-btn {
-            flex: 1;
-            padding: 1rem;
-            border-radius: 6px;
-            font-size: 1rem;
-            font-family: "SimSun", "宋体", serif;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-start {
-            background: rgba(66, 153, 225, 0.3);
-            color: #ffffff;
-            border: 1px solid rgba(66, 153, 225, 0.4);
-        }
-        .btn-start:hover {
-            background: rgba(66, 153, 225, 0.4);
-            border-color: rgba(66, 153, 225, 0.6);
-        }
-        .btn-reset {
-            background: transparent;
-            color: #cbd5e1;
-            border: 1px solid #1e293b;
-        }
-        .btn-reset:hover {
-            background: rgba(30, 41, 59, 0.5);
-            color: #fff;
-        }
-        .count-wrap {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-        }
-        .time-big-card {
-            background: rgba(30, 41, 59, 0.7);
-            border-radius: 8px;
-            padding: 30px 20px;
-            min-width: 120px;
-            border: 1px solid #1e293b;
-            transition: 0.3s;
-        }
-        .time-big-card:hover {
-            border-color: #4299e1;
-        }
-        .roll-viewport {
-            position: relative;
-            height: 70px;
-            overflow: hidden;
-        }
-        .roll-inner {
-            transition: transform 0.5s cubic-bezier(0.22, 0.1, 0.25, 1.05);
-        }
-        .num-item {
-            height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 52px;
-            font-weight: normal;
-            color: #fff;
-        }
-        .big-label {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            margin-top: 8px;
-        }
-        .finish-text {
-            font-size: 2rem;
-            color: #4299e1;
-            margin-bottom: 24px;
-        }
-        .status-tip {
-            margin-top: 2rem;
-            font-size: 1rem;
-            color: #94a3b8;
-            z-index: 10;
-        }
-        /* 置底 footer */
-        footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            padding: 1rem 0;
-            color: #64748b;
-            font-size: 0.9rem;
-            z-index: 10;
-            background: rgba(10,12,16,0.8);
-        }
-        /* Cookies 悬浮窗口 */
-        .cookie-banner {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 320px;
-            background: rgba(20, 24, 32, 0.95);
-            backdrop-filter: blur(10px);
-            border: 1px solid #2a3546;
-            border-radius: 10px;
-            padding: 20px;
-            z-index: 999;
-            display: none;
-            box-shadow: 0 5px 20 rgba(0,0,0,0.3);
-        }
-        .cookie-title {
-            font-size: 16px;
-            color: #fff;
-            margin-bottom: 8px;
-        }
-        .cookie-desc {
-            font-size: 13px;
-            color: #a0aec0;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-        .cookie-btns {
-            display: flex;
-            gap: 10px;
-        }
-        .cookie-btn {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .cookie-accept {
-            background: #2b7cd0;
-            color: #fff;
-        }
-        .cookie-reject {
-            background: #2d3748;
-            color: #e2e8f0;
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>时间 TIMER · 咏叹调 Aria</title>
+<meta name="description" content="以指定时间为终点的简约倒计时工具。" />
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('timer-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<style>
+  /* ============================================================
+     1. 设计令牌
+     ============================================================ */
+  :root {
+    --bg:          #f2f3f5;
+    --surface:     #f8f9fa;
+    --surface-2:   #e9ebee;
 
-        @media (max-width: 600px) {
-            .num-item { font-size: 36px; height: 50px; }
-            .roll-viewport { height: 50px; }
-            .time-big-card { min-width: 90px; padding: 20px 15px; }
-            .center-main { padding: 1.5rem; }
-            .cookie-banner {
-                right: 10px;
-                left: 10px;
-                width: auto;
-            }
-        }
-    </style>
+    --text:        #23262b;
+    --text-2:      #5b6169;
+    --text-3:      #8b9199;
+
+    --line:        rgba(35, 38, 43, 0.09);
+    --line-strong: rgba(35, 38, 43, 0.16);
+
+    --accent:      #2f6bed;
+    --accent-soft: rgba(47, 107, 237, 0.09);
+
+    --glass:       rgba(242, 243, 245, 0.78);
+
+    --shadow-sm:   0 1px 2px rgba(23, 26, 31, 0.05);
+    --shadow-md:   0 2px 10px rgba(23, 26, 31, 0.06), 0 1px 2px rgba(23, 26, 31, 0.04);
+    --shadow-lg:   0 18px 44px -20px rgba(23, 26, 31, 0.42);
+
+    --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+    color-scheme:  light;
+  }
+
+  html.dark {
+    --bg:          #16181b;
+    --surface:     #1c1f23;
+    --surface-2:   #23262b;
+
+    --text:        #e7e8ea;
+    --text-2:      #a1a6ad;
+    --text-3:      #737980;
+
+    --line:        rgba(255, 255, 255, 0.08);
+    --line-strong: rgba(255, 255, 255, 0.16);
+
+    --accent:      #6d9bff;
+    --accent-soft: rgba(109, 155, 255, 0.13);
+
+    --glass:       rgba(22, 24, 27, 0.78);
+
+    --shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.28);
+    --shadow-md:   0 2px 12px rgba(0, 0, 0, 0.34);
+    --shadow-lg:   0 18px 46px -20px rgba(0, 0, 0, 0.8);
+
+    color-scheme:  dark;
+  }
+
+  /* ============================================================
+     2. 基础
+     ============================================================ */
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+    letter-spacing: 0.005em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+
+  h1, h2, h3, p, ul, li { margin: 0; padding: 0; }
+  ul { list-style: none; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  input { font: inherit; }
+
+  ::selection { background: var(--accent-soft); color: var(--text); }
+
+  .container {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ============================================================
+     3. 顶栏
+     ============================================================ */
+  .site-header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 60;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    background: var(--glass);
+    -webkit-backdrop-filter: saturate(170%) blur(14px);
+    backdrop-filter: saturate(170%) blur(14px);
+    border-bottom: 1px solid var(--line);
+    transition: background-color 0.35s ease, border-color 0.35s ease;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-right: auto;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+  .brand i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-2);
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .icon-btn:hover {
+    color: var(--text);
+    background: var(--surface-2);
+    border-color: var(--line-strong);
+  }
+
+  /* ============================================================
+     4. 主区域
+     ============================================================ */
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 96px 24px 40px;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  /* ============================================================
+     5. 卡片
+     ============================================================ */
+  .timer-card {
+    width: 100%;
+    padding: 30px 28px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow-md);
+    transition: background-color 0.35s ease, border-color 0.35s ease;
+  }
+
+  /* 头部 */
+  .panel-head {
+    text-align: center;
+    margin-bottom: 26px;
+  }
+  .eyebrow {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .panel-title {
+    margin-top: 8px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+  }
+  .panel-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-2);
+  }
+
+  /* 表单字段 */
+  .field {
+    display: block;
+    margin-bottom: 18px;
+  }
+  .field-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+  .time-input {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-variant-numeric: tabular-nums;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.35s ease;
+  }
+  .time-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  /* 开关 */
+  .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .switch input {
+    position: absolute;
+    width: 0; height: 0;
+    opacity: 0;
+  }
+  .switch .track {
+    position: relative;
+    width: 34px; height: 20px;
+    flex-shrink: 0;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--line-strong);
+    transition: background-color 0.24s ease, border-color 0.24s ease;
+  }
+  .switch .thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--text-3);
+    transition: transform 0.24s var(--ease), background-color 0.24s ease;
+  }
+  .switch input:checked + .track {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+  .switch input:checked + .track .thumb {
+    transform: translateX(14px);
+    background: var(--accent);
+  }
+  .switch-label {
+    font-size: 13.5px;
+    color: var(--text-2);
+  }
+
+  /* 按钮 */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+                color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, transform 0.2s ease;
+  }
+  .btn i { font-size: 12px; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #f6f9ff;
+    box-shadow: 0 1px 2px rgba(47, 107, 237, 0.3);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.07);
+    box-shadow: 0 8px 20px -10px rgba(47, 107, 237, 0.7);
+  }
+  .btn-primary:active { transform: translateY(1px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+  .btn-ghost:hover {
+    background: var(--surface-2);
+    border-color: var(--text-3);
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 10px;
+  }
+  .btn-group .btn { flex: 1; }
+
+  /* ============================================================
+     6. 倒计时展示（硬切）
+     ============================================================ */
+  .count-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .time-card {
+    flex: 1;
+    min-width: 0;
+    padding: 22px 10px 18px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-align: center;
+    transition: border-color 0.24s ease, background-color 0.35s ease;
+  }
+  .time-card:hover { border-color: var(--line-strong); }
+
+  .roll-viewport {
+    position: relative;
+    height: 62px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .roll-inner {
+    width: 100%;
+  }
+
+  .num-item {
+    height: 62px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .big-label {
+    margin-top: 4px;
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    color: var(--text-3);
+  }
+
+  /* 结束状态 */
+  .finish-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 8px 0 4px;
+  }
+  .finish-icon {
+    width: 46px; height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 16px;
+    margin-bottom: 18px;
+  }
+  .finish-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 22px;
+  }
+  .finish-panel .btn { min-width: 140px; }
+
+  /* ============================================================
+     7. 状态提示
+     ============================================================ */
+  .status-tip {
+    margin-top: 22px;
+    min-height: 22px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text-3);
+    text-align: center;
+    transition: color 0.2s ease;
+  }
+
+  /* ============================================================
+     8. 页脚
+     ============================================================ */
+  .site-footer {
+    flex-shrink: 0;
+    padding: 20px 0 26px;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--text-3);
+  }
+  .site-footer a {
+    color: var(--text-2);
+    transition: color 0.2s ease;
+  }
+  .site-footer a:hover { color: var(--accent); }
+
+  /* ============================================================
+     9. Cookie 授权
+     ============================================================ */
+  .cookie-banner {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 200;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    padding: 18px 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition: opacity 0.32s ease, transform 0.32s var(--ease),
+                visibility 0.32s, background-color 0.35s ease;
+  }
+  .cookie-banner.show {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .cookie-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .cookie-desc {
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--text-2);
+    margin-bottom: 16px;
+  }
+  .cookie-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .cookie-btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: filter 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .cookie-accept {
+    background: var(--accent);
+    color: #f6f9ff;
+  }
+  .cookie-accept:hover { filter: brightness(1.07); }
+  .cookie-reject {
+    background: transparent;
+    color: var(--text-2);
+    border-color: var(--line-strong);
+  }
+  .cookie-reject:hover { background: var(--surface-2); color: var(--text); }
+
+  /* ============================================================
+     10. 响应式
+     ============================================================ */
+  @media (max-width: 600px) {
+    main { padding: 84px 18px 32px; }
+    .timer-card { padding: 24px 20px; border-radius: 12px; }
+
+    .panel-head { margin-bottom: 22px; }
+    .panel-title { font-size: 1.1rem; }
+
+    .count-wrap { gap: 8px; }
+    .time-card { padding: 16px 6px 14px; border-radius: 9px; }
+    .roll-viewport { height: 46px; }
+    .num-item { height: 46px; font-size: 30px; }
+    .big-label { margin-top: 3px; font-size: 10.5px; letter-spacing: 0.1em; }
+
+    .btn-group { gap: 8px; }
+    .btn { padding: 10px 14px; font-size: 13.5px; }
+
+    .cookie-banner {
+      right: 12px;
+      left: 12px;
+      bottom: 12px;
+      width: auto;
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .num-item { font-size: 26px; }
+    .roll-viewport { height: 42px; }
+    .num-item { height: 42px; }
+    .time-card { padding: 14px 4px 12px; }
+    .big-label { font-size: 10px; }
+  }
+
+  /* ============================================================
+     11. 动效偏好
+     ============================================================ */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
 </head>
 <body>
-<script src="https://keepandroidopen.org/banner.js?lang=zh-CN&size=mini&animation=off"></script>
-    <div class="fog"></div>
-    <div class="rain-container" id="rain"></div>
 
-    <div class="center-main glass" id="centerBox">
-        <div class="setting-inner" id="settingPanel">
-            <h2 class="setting-title">时间 TIMER</h2>
-            <input type="time" step="1" id="timePicker" class="time-input">
-            
-            <label class="sound-switch">
-                <input type="checkbox" id="soundEnabled" checked>
-                倒计时结束播放提示音
-            </label>
+<!-- ============================================================
+     顶栏
+     ============================================================ -->
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="#!">
+      <i class="fas fa-hourglass-half"></i>
+      <span>时间 TIMER</span>
+    </a>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换主题">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
+</header>
 
-            <div class="btn-group">
-                <button class="md-btn btn-start" id="startBtn">开始旅程</button>
-                <button class="md-btn btn-reset" id="resetBtn">重置</button>
-            </div>
-        </div>
-    </div>
-
+<!-- ============================================================
+     主内容
+     ============================================================ -->
+<main>
+  <div class="stage">
+    <div class="timer-card" id="centerBox"></div>
     <div class="status-tip" id="statusTip">欢迎回来，旅程要开始了吗？</div>
-    <footer>2026 <a herf="https://linxianlww.github.io/">咏叹调 Aria<a/> - Protect, Remove, Reborn.</footer>
+  </div>
+</main>
 
-    <!-- Cookies 弹窗 -->
-    <div class="cookie-banner" id="cookieBanner">
-        <div class="cookie-title">Cookie 授权</div>
-        <div class="cookie-desc">本网站使用 Cookies 及类似技术，用于识别/获取您的使用信息以改善用户体验。此项默认不包含您的个人隐私信息。使用本网站即代表你已阅读并统一我们的用户协议及隐私政策，参见本项目仓库。</div>
-        <div class="cookie-btns">
-            <button class="cookie-btn cookie-accept" id="acceptCookie">允许</button>
-            <button class="cookie-btn cookie-reject" id="rejectCookie">拒绝</button>
-        </div>
-    </div>
+<!-- ============================================================
+     页脚
+     ============================================================ -->
+<footer class="site-footer">
+  <div class="container">
+    2026 · <a href="https://linxianlww.github.io/" target="_blank" rel="noopener noreferrer">咏叹调 Aria</a> · Protect, Remove, Reborn.
+  </div>
+</footer>
 
-    <script>
-        let timer = null;
-        let lastVals = { h:-1, m:-1, s:-1 };
-        let currentStartTime = null;
-        const centerBox = document.getElementById('centerBox');
-        const settingPanel = document.getElementById('settingPanel');
-        const timePicker = document.getElementById('timePicker');
-        const startBtn = document.getElementById('startBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const statusTip = document.getElementById('statusTip');
-        const soundEnabled = document.getElementById('soundEnabled');
-        const endSound = new Audio('timer_utilitarian_v2.mp3');
+<!-- ============================================================
+     Cookie 授权
+     ============================================================ -->
+<div class="cookie-banner" id="cookieBanner">
+  <div class="cookie-title">Cookie 授权</div>
+  <div class="cookie-desc">
+    本网站使用 Cookies 及类似技术，用于识别/获取您的使用信息以改善体验。此项默认不包含您的个人隐私信息。使用本网站即代表您已阅读并同意用户协议及隐私政策，参见本项目仓库。
+  </div>
+  <div class="cookie-btns">
+    <button class="cookie-btn cookie-accept" id="acceptCookie" type="button">允许</button>
+    <button class="cookie-btn cookie-reject" id="rejectCookie" type="button">拒绝</button>
+  </div>
+</div>
 
-        // ==============================================
-        // Cookies 授权逻辑
-        // ==============================================
-        const cookieBanner = document.getElementById('cookieBanner');
-        const acceptCookie = document.getElementById('acceptCookie');
-        const rejectCookie = document.getElementById('rejectCookie');
+<script>
+(function () {
+  'use strict';
 
-        // 读取 Cookie
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-        // 设置 Cookie 365天
-        function setCookie(name, value) {
-            document.cookie = `${name}=${value}; max-age=${365*24*60*60}; path=/`;
-        }
+  /* ============================================================
+     工具
+     ============================================================ */
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
 
-        // 初始化弹窗
-        function initCookieBanner() {
-            const hasConsent = getCookie('cookie_consent');
-            if (!hasConsent) {
-                cookieBanner.style.display = 'block';
-            }
-        }
+  /* ============================================================
+     主题
+     ============================================================ */
+  var themeToggle = document.getElementById('themeToggle');
+  var themeIcon = themeToggle ? themeToggle.querySelector('i') : null;
 
-        // 允许
-        acceptCookie.addEventListener('click', () => {
-            setCookie('cookie_consent', 'accepted');
-            cookieBanner.style.display = 'none';
+  function syncThemeIcon() {
+    if (!themeIcon) return;
+    themeIcon.className = document.documentElement.classList.contains('dark')
+      ? 'fas fa-sun' : 'fas fa-moon';
+  }
+  syncThemeIcon();
+
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      document.documentElement.classList.toggle('dark');
+      try {
+        localStorage.setItem('timer-theme',
+          document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+      } catch (e) {}
+      syncThemeIcon();
+    });
+  }
+
+  /* ============================================================
+     Cookie 授权
+     ============================================================ */
+  var cookieBanner = document.getElementById('cookieBanner');
+
+  function getCookie(name) {
+    var value = '; ' + document.cookie;
+    var parts = value.split('; ' + name + '=');
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  function setCookie(name, value) {
+    document.cookie = name + '=' + value + '; max-age=' + (365 * 24 * 60 * 60) + '; path=/';
+  }
+
+  function initCookieBanner() {
+    if (!getCookie('cookie_consent')) {
+      cookieBanner.classList.add('show');
+    }
+  }
+
+  document.getElementById('acceptCookie').addEventListener('click', function () {
+    setCookie('cookie_consent', 'accepted');
+    cookieBanner.classList.remove('show');
+  });
+
+  document.getElementById('rejectCookie').addEventListener('click', function () {
+    setCookie('cookie_consent', 'rejected');
+    cookieBanner.classList.remove('show');
+  });
+
+  /* ============================================================
+     计时记录
+     ============================================================ */
+  function saveTimeRecord(start, end) {
+    if (getCookie('cookie_consent') !== 'accepted') return;
+    var records;
+    try {
+      records = JSON.parse(localStorage.getItem('time_records') || '[]');
+    } catch (e) {
+      records = [];
+    }
+    records.push({
+      startTime: start,
+      endTime: end,
+      timestamp: new Date().toLocaleString()
+    });
+    try {
+      localStorage.setItem('time_records', JSON.stringify(records));
+    } catch (e) {}
+  }
+
+  window.view = function () {
+    if (getCookie('cookie_consent') !== 'accepted') {
+      console.log('未授权 Cookie，无法查看记录');
+      return;
+    }
+    var records;
+    try {
+      records = JSON.parse(localStorage.getItem('time_records') || '[]');
+    } catch (e) {
+      records = [];
+    }
+    if (records.length === 0) {
+      console.log('暂无计时记录');
+      return;
+    }
+    console.log('全部计时记录：');
+    console.table(records);
+  };
+
+  /* ============================================================
+     状态
+     ============================================================ */
+  var timer = null;
+  var currentStartTime = null;
+  var lastVals = { h: -1, m: -1, s: -1 };
+  var endSound = new Audio('timer_utilitarian_v2.mp3');
+
+  var centerBox = document.getElementById('centerBox');
+  var statusTip = document.getElementById('statusTip');
+
+  /* ============================================================
+     设置面板
+     ============================================================ */
+  function renderSettingsPanel() {
+    centerBox.innerHTML =
+      '<div class="panel-head">' +
+        '<span class="eyebrow">Setting</span>' +
+        '<h1 class="panel-title">选择目标时间</h1>' +
+        '<p class="panel-sub">以指定时间为终点的倒计时，精确到秒。</p>' +
+      '</div>' +
+      '<label class="field">' +
+        '<span class="field-label">目标时间</span>' +
+        '<input type="time" step="1" id="timePicker" class="time-input" />' +
+      '</label>' +
+      '<label class="switch">' +
+        '<input type="checkbox" id="soundEnabled" checked />' +
+        '<span class="track"><span class="thumb"></span></span>' +
+        '<span class="switch-label">倒计时结束播放提示音</span>' +
+      '</label>' +
+      '<div class="btn-group">' +
+        '<button type="button" class="btn btn-primary" id="startBtn">' +
+          '<i class="fas fa-play"></i>开始旅程' +
+        '</button>' +
+        '<button type="button" class="btn btn-ghost" id="resetBtn">' +
+          '<i class="fas fa-rotate-left"></i>重置' +
+        '</button>' +
+      '</div>';
+
+    var tp = document.getElementById('timePicker');
+    var now = new Date();
+    tp.min = pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds());
+
+    document.getElementById('startBtn').addEventListener('click', startTimer);
+    document.getElementById('resetBtn').addEventListener('click', resetTimer);
+  }
+
+  /* ============================================================
+     倒计时 DOM（初始直接写入）
+     ============================================================ */
+  function initCountDOM(target) {
+    centerBox.innerHTML =
+      '<div class="count-wrap">' +
+        '<div class="time-card">' +
+          '<div class="roll-viewport">' +
+            '<div class="roll-inner" id="hRoll"><div class="num-item">00</div></div>' +
+          '</div>' +
+          '<div class="big-label">时</div>' +
+        '</div>' +
+        '<div class="time-card">' +
+          '<div class="roll-viewport">' +
+            '<div class="roll-inner" id="mRoll"><div class="num-item">00</div></div>' +
+          '</div>' +
+          '<div class="big-label">分</div>' +
+        '</div>' +
+        '<div class="time-card">' +
+          '<div class="roll-viewport">' +
+            '<div class="roll-inner" id="sRoll"><div class="num-item">00</div></div>' +
+          '</div>' +
+          '<div class="big-label">秒</div>' +
+        '</div>' +
+      '</div>';
+
+    var diff = target - Date.now();
+    if (diff <= 0) {
+      lastVals = { h: -1, m: -1, s: -1 };
+      return;
+    }
+
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+
+    var hNode = document.querySelector('#hRoll .num-item');
+    var mNode = document.querySelector('#mRoll .num-item');
+    var sNode = document.querySelector('#sRoll .num-item');
+
+    if (hNode) hNode.textContent = pad2(h);
+    if (mNode) mNode.textContent = pad2(m);
+    if (sNode) sNode.textContent = pad2(s);
+
+    lastVals = { h: h, m: m, s: s };
+  }
+
+  /* ============================================================
+     数字更新（硬切，无动画）
+     ============================================================ */
+  function setRollValue(rollId, value) {
+    var wrap = document.getElementById(rollId);
+    if (!wrap) return;
+
+    var item = wrap.querySelector('.num-item');
+    if (item) {
+      item.textContent = pad2(value);
+    } else {
+      wrap.innerHTML = '<div class="num-item">' + pad2(value) + '</div>';
+    }
+  }
+
+  /* ============================================================
+     倒计时更新
+     ============================================================ */
+  function updateCount(target) {
+    var diff = target - Date.now();
+
+    if (diff <= 0) {
+      clearInterval(timer);
+      timer = null;
+
+      centerBox.innerHTML =
+        '<div class="finish-panel">' +
+          '<div class="finish-icon"><i class="fas fa-check"></i></div>' +
+          '<div class="finish-title">旅程告一段落</div>' +
+          '<button type="button" class="btn btn-primary" id="restartBtn">' +
+            '<i class="fas fa-rotate-right"></i>重新开始' +
+          '</button>' +
+        '</div>';
+
+      document.getElementById('restartBtn').addEventListener('click', resetTimer);
+
+      statusTip.textContent = '时间已到，新的开始。';
+
+      saveTimeRecord(currentStartTime, new Date().toLocaleString());
+      currentStartTime = null;
+
+      var sb = document.getElementById('soundEnabled');
+      if (sb && sb.checked) {
+        endSound.play().catch(function (err) {
+          console.log('音频播放失败', err);
         });
-        // 拒绝
-        rejectCookie.addEventListener('click', () => {
-            setCookie('cookie_consent', 'rejected');
-            cookieBanner.style.display = 'none';
-        });
+      }
+      return;
+    }
 
-        // ==============================================
-        // 计时记录存储（仅允许 Cookies 时生效）
-        // ==============================================
-        function saveTimeRecord(start, end) {
-            if (getCookie('cookie_consent') !== 'accepted') return;
-            let records = JSON.parse(localStorage.getItem('time_records') || '[]');
-            records.push({
-                startTime: start,
-                endTime: end,
-                timestamp: new Date().toLocaleString()
-            });
-            localStorage.setItem('time_records', JSON.stringify(records));
-        }
+    var h = Math.floor(diff / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
 
-        // 控制台输出：输入 view() 查看
-        window.view = function() {
-            if (getCookie('cookie_consent') !== 'accepted') {
-                console.log('❌ 未授权 Cookie，无法查看记录');
-                return;
-            }
-            const records = JSON.parse(localStorage.getItem('time_records') || '[]');
-            if (records.length === 0) {
-                console.log('📝 暂无计时记录');
-                return;
-            }
-            console.log('📋 全部计时记录：');
-            console.table(records);
-        }
+    if (lastVals.h !== h) { setRollValue('hRoll', h); lastVals.h = h; }
+    if (lastVals.m !== m) { setRollValue('mRoll', m); lastVals.m = m; }
+    if (lastVals.s !== s) { setRollValue('sRoll', s); lastVals.s = s; }
+  }
 
-        // ==============================================
-        // 原有计时逻辑
-        // ==============================================
-        const now = new Date();
-        const curH = String(now.getHours()).padStart(2,'0');
-        const curM = String(now.getMinutes()).padStart(2,'0');
-        const curS = String(now.getSeconds()).padStart(2,'0');
-        timePicker.min = `${curH}:${curM}:${curS}`;
+  /* ============================================================
+     开始 / 重置
+     ============================================================ */
+  function startTimer() {
+    var tp = document.getElementById('timePicker');
+    if (!tp) return;
+    var val = tp.value;
 
-        function initCountDOM(){
-            centerBox.innerHTML = `
-                <div class="count-wrap">
-                    <div class="time-big-card">
-                        <div class="roll-viewport"><div class="roll-inner" id="hRoll"><div class="num-item">00</div></div></div>
-                        <div class="big-label">时</div>
-                    </div>
-                    <div class="time-big-card">
-                        <div class="roll-viewport"><div class="roll-inner" id="mRoll"><div class="num-item">00</div></div></div>
-                        <div class="big-label">分</div>
-                    </div>
-                    <div class="time-big-card">
-                        <div class="roll-viewport"><div class="roll-inner" id="sRoll"><div class="num-item">00</div></div></div>
-                        <div class="big-label">秒</div>
-                    </div>
-                </div>
-            `;
-            lastVals = { h:-1, m:-1, s:-1 };
-        }
+    if (!val) {
+      statusTip.textContent = '请先选择目标时间';
+      return;
+    }
 
-        function rollUpdate(rollId, oldVal, newVal){
-            const wrap = document.getElementById(rollId);
-            const itemHeight = wrap.querySelector('.num-item').offsetHeight;
-            wrap.style.transition = 'none';
-            
-            const newDom = document.createElement('div');
-            newDom.className = 'num-item';
-            newDom.textContent = newVal;
+    /* 彩蛋 */
+    if (val === '11:45:14') {
+      window.open('https://114514.cn', '_blank');
+      statusTip.textContent = '发现了隐藏的旅程！';
+      return;
+    }
 
-            if (newVal < oldVal) {
-                wrap.appendChild(newDom);
-                setTimeout(() => {
-                    wrap.style.transition = 'transform 0.5s cubic-bezier(0.22, 0.1, 0.25, 1.05)';
-                    wrap.style.transform = `translateY(-${itemHeight}px)`;
-                    setTimeout(()=>{
-                        wrap.style.transition = 'none';
-                        wrap.style.transform = 'translateY(0)';
-                        wrap.firstElementChild.remove();
-                    }, 500);
-                }, 20);
-            } else {
-                wrap.insertBefore(newDom, wrap.firstChild);
-                wrap.style.transform = `translateY(-${itemHeight}px)`;
-                setTimeout(() => {
-                    wrap.style.transition = 'transform 0.5s cubic-bezier(0.22, 0.1, 0.25, 1.05)';
-                    wrap.style.transform = 'translateY(0)';
-                    setTimeout(()=>{
-                        wrap.style.transition = 'none';
-                        wrap.lastElementChild.remove();
-                    }, 500);
-                }, 20);
-            }
-        }
+    var parts = val.split(':');
+    var selH = parseInt(parts[0], 10) || 0;
+    var selM = parseInt(parts[1], 10) || 0;
+    var selS = parts[2] ? parseInt(parts[2], 10) : 0;
 
-        function updateCount(target){
-            const diff = target - Date.now();
-            if (diff <= 0) {
-                clearInterval(timer);
-                centerBox.innerHTML = `
-                    <div class="finish-text">旅程告一段落</div>
-                    <button class="md-btn btn-reset" onclick="location.reload()">重新开始</button>
-                `;
-                statusTip.textContent = '时间已到，新的开始。';
-                
-                // 保存结束时间
-                saveTimeRecord(currentStartTime, new Date().toLocaleString());
-                currentStartTime = null;
+    var target = new Date();
+    target.setHours(selH, selM, selS, 0);
 
-                if(soundEnabled.checked){
-                    endSound.play().catch(err=>console.log('音频播放失败'));
-                }
-                return;
-            }
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            
-            const hTxt = String(h).padStart(2,'0');
-            const mTxt = String(m).padStart(2,'0');
-            const sTxt = String(s).padStart(2,'0');
-            
-            if(lastVals.h !== hTxt) { rollUpdate('hRoll', lastVals.h, hTxt); lastVals.h = hTxt; }
-            if(lastVals.m !== mTxt) { rollUpdate('mRoll', lastVals.m, mTxt); lastVals.m = mTxt; }
-            if(lastVals.s !== sTxt) { rollUpdate('sRoll', lastVals.s, sTxt); lastVals.s = sTxt; }
-        }
+    if (target <= new Date()) {
+      statusTip.textContent = '无法前往过去，请选择未来时间';
+      return;
+    }
 
-        startBtn.addEventListener('click', () => {
-            const val = timePicker.value;
-            if (!val) {
-                statusTip.textContent = '请先选择目标时间';
-                return;
-            }
+    currentStartTime = new Date().toLocaleString();
+    statusTip.textContent = '时间逐渐消逝，未来正在向你靠近。';
 
-            // ========== 彩蛋：11:45:14 跳转 ==========
-            if(val === "11:45:14"){
-                window.open("https://114514.cn", "_blank");
-                statusTip.textContent = "发现了隐藏的旅程！";
-                return;
-            }
+    initCountDOM(target);
 
-            const parts = val.split(':');
-            const selH = +parts[0];
-            const selM = +parts[1];
-            const selS = parts[2] ? +parts[2] : 0;
+    if (timer) clearInterval(timer);
+    updateCount(target);
+    timer = setInterval(function () { updateCount(target); }, 1000);
+  }
 
-            const target = new Date();
-            target.setHours(selH, selM, selS, 0);
-            if (target <= new Date()) {
-                statusTip.textContent = '无法前往过去，请选择未来时间';
-                return;
-            }
-            // 记录开始时间
-            currentStartTime = new Date().toLocaleString();
-            
-            statusTip.textContent = '时间逐渐消逝，未来正在向你靠近。';
-            initCountDOM();
-            if (timer) clearInterval(timer);
-            updateCount(target);
-            timer = setInterval(() => updateCount(target), 1000);
-        });
+  function resetTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+    currentStartTime = null;
+    lastVals = { h: -1, m: -1, s: -1 };
+    statusTip.textContent = '欢迎回来，旅程即将开始。';
+    renderSettingsPanel();
+  }
 
-        resetBtn.addEventListener('click', () => {
-            if (timer) clearInterval(timer);
-            timer = null;
-            timePicker.value = '';
-            currentStartTime = null;
-            statusTip.textContent = '欢迎回来，旅程即将开始。';
-            centerBox.innerHTML = settingPanel.outerHTML;
-        });
+  /* ============================================================
+     初始化
+     ============================================================ */
+  document.addEventListener('DOMContentLoaded', function () {
+    renderSettingsPanel();
+    initCookieBanner();
+  });
 
-        // 雨滴（注释保留）
-        const rainContainer = document.getElementById('rain');
-        function createRain() {}
-
-        // 启动
-        window.addEventListener('load', () => {
-            initCookieBanner();
-        });
-    </script>
+})();
+</script>
 </body>
 </html>
