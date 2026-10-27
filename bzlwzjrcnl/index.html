@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>别装了，我早就认出你了</title>
+
+<!-- 尽早应用主题，避免闪烁 -->
+<script>
+(function () {
+  var t = "light";
+  try {
+    var saved = localStorage.getItem("theme");
+    if (saved === "dark" || saved === "light") {
+      t = saved;
+    } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      t = "dark";
+    }
+  } catch (e) {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) t = "dark";
+  }
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
+
+<style>
+  /* ============ 主题变量 ============ */
+  :root {
+    --bg:         #f4f2ef;
+    --ink-0:      #26221d;   /* 大标题 */
+    --ink:        #302c27;
+    --ink-2:      #3b3630;
+    --ink-3:      #6d675f;
+    --ink-4:      #8a8378;
+    --ink-5:      #a29a8e;
+    --line:       #ddd7ce;
+    --line-soft:  #e6e1d9;
+    --accent:     #c2622d;
+    --accent-rgb: 194, 98, 45;
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    --bg:         #1b1917;
+    --ink-0:      #eee9e1;
+    --ink:        #d9d3ca;
+    --ink-2:      #c9c2b8;
+    --ink-3:      #a49c91;
+    --ink-4:      #857d72;
+    --ink-5:      #696259;
+    --line:       #35312b;
+    --line-soft:  #2a2723;
+    --accent:     #d97a45;
+    --accent-rgb: 217, 122, 69;
+    color-scheme: dark;
+  }
+
+  /* ============ 基础 ============ */
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", "Songti SC", "STSong", "SimSun",
+                 "Noto Serif CJK SC", "Source Han Serif SC", serif;
+    font-size: 16px;
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color .4s ease, color .4s ease;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  ::selection { background: rgba(var(--accent-rgb), .18); }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 32px 96px;
+  }
+
+  /* ============ 页头 ============ */
+  .site-header { padding-top: 44px; }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-mark {
+    width: 9px; height: 9px;
+    background: var(--accent);
+    flex: none;
+    transition: background-color .35s ease;
+  }
+  .brand-name {
+    font-size: 15px;
+    letter-spacing: .3em;
+    text-indent: .3em;
+    color: var(--ink);
+    transition: color .35s ease;
+  }
+
+  /* 主题切换按钮 */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-4);
+    font: inherit;
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+  }
+  .theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .theme-toggle:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .theme-toggle svg { display: block; }
+  .theme-toggle .icon-sun { display: none; }
+  html[data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
+  html[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+  .rule {
+    height: 1px;
+    background: var(--line);
+    margin-top: 20px;
+    transition: background-color .35s ease;
+  }
+
+  /* ============ 目录页 ============ */
+  .page-head { padding: 56px 0 4px; }
+
+  .page-title {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    color: var(--ink-0);
+    transition: color .35s ease;
+  }
+  .page-sub {
+    margin: 12px 0 0;
+    font-size: 13px;
+    letter-spacing: .06em;
+    color: var(--ink-4);
+    transition: color .35s ease;
+  }
+
+  .toc {
+    list-style: none;
+    margin: 34px 0 0;
+    padding: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .toc-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.2em 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 17px 0 17px 18px;
+    border-bottom: 1px solid var(--line-soft);
+    animation: fadeUp .55s cubic-bezier(.22,.61,.36,1) both;
+    transition: border-color .35s ease;
+  }
+
+  .toc-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 3px;
+    height: 16px;
+    margin-top: -8px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform .28s cubic-bezier(.22,.61,.36,1);
+  }
+  .toc-item:hover::before,
+  .toc-item:focus-visible::before { transform: scaleY(1); }
+
+  .toc-num {
+    font-size: 13px;
+    letter-spacing: .08em;
+    color: var(--ink-5);
+    font-variant-numeric: tabular-nums;
+    transition: color .35s ease;
+  }
+
+  .toc-title {
+    font-size: 17px;
+    color: var(--ink);
+    min-width: 0;
+    overflow-wrap: break-word;
+    transition: color .22s, transform .28s cubic-bezier(.22,.61,.36,1);
+  }
+  .toc-item:hover .toc-title,
+  .toc-item:focus-visible .toc-title {
+    color: var(--accent);
+    transform: translateX(3px);
+  }
+
+  .toc-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--ink-4);
+    white-space: nowrap;
+    transition: color .35s ease;
+  }
+  .toc-meta .sep {
+    width: 1px;
+    height: 10px;
+    background: var(--line);
+    display: inline-block;
+  }
+  .toc-wc { min-width: 5.6em; text-align: right; }
+
+  /* ============ 阅读页 ============ */
+  .reader { padding-top: 40px; }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    letter-spacing: .12em;
+    color: var(--ink-4);
+    transition: color .2s;
+  }
+  .back-link svg { transition: transform .25s; }
+  .back-link:hover { color: var(--accent); }
+  .back-link:hover svg { transform: translateX(-3px); }
+
+  .chapter-head { margin-top: 38px; }
+
+  .chapter-title {
+    margin: 0;
+    font-size: clamp(25px, 4.4vw, 33px);
+    font-weight: 600;
+    line-height: 1.45;
+    letter-spacing: .02em;
+    color: var(--ink-0);
+    transition: color .35s ease;
+  }
+
+  .chapter-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    font-size: 12.5px;
+    letter-spacing: .06em;
+    color: var(--ink-4);
+    transition: color .35s ease;
+  }
+  .meta-mark {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    flex: none;
+    transition: background-color .35s ease;
+  }
+  .meta-sep {
+    width: 1px; height: 10px;
+    background: var(--line);
+  }
+
+  .chapter-rule {
+    height: 1px;
+    background: var(--line);
+    margin-top: 30px;
+    transition: background-color .35s ease;
+  }
+
+  .chapter-body {
+    margin-top: 34px;
+    font-size: 17px;
+    line-height: 2;
+    color: var(--ink-2);
+    animation: fadeIn .65s both;
+    transition: color .35s ease;
+  }
+  .chapter-body p {
+    margin: 0;
+    text-indent: 2em;           /* 每行首行缩进 */
+  }
+  .chapter-body p + p { margin-top: .75em; }
+  .chapter-body p.gap { margin-top: 1.65em; }   /* 原文空行处，段距更大 */
+
+  .body-loading {
+    font-size: 13px;
+    letter-spacing: .12em;
+    color: var(--ink-5);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  .body-error {
+    text-indent: 0;
+    font-size: 14px;
+    color: var(--ink-4);
+    line-height: 1.9;
+  }
+
+  /* ============ 上一章 / 下一章 ============ */
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 54px;
+    padding-top: 26px;
+    border-top: 1px solid var(--line);
+    transition: border-color .35s ease;
+  }
+  .pager-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    max-width: 48%;
+    color: var(--ink-3);
+    transition: color .35s ease;
+  }
+  .pager-link.next { margin-left: auto; text-align: right; }
+  .pager-link svg {
+    flex: none;
+    color: var(--ink-5);
+    transition: transform .25s, color .22s;
+  }
+  .pager-link.prev:hover svg { transform: translateX(-3px); color: var(--accent); }
+  .pager-link.next:hover svg { transform: translateX(3px);  color: var(--accent); }
+  .pager-link:hover .pager-name { color: var(--accent); }
+
+  .pager-text { min-width: 0; display: block; }
+  .pager-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--ink-5);
+    margin-bottom: 4px;
+    transition: color .35s ease;
+  }
+  .pager-name {
+    display: block;
+    font-size: 15px;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color .22s;
+  }
+  .pager-link.is-disabled { opacity: .38; pointer-events: none; }
+
+  /* ============ 许可协议（VitePress 风格，单行） ============ */
+  .chapter-footer {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 44px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    line-height: 1.8;
+    letter-spacing: .02em;
+    color: var(--ink-4);
+    transition: border-color .35s ease, color .35s ease;
+  }
+  .footer-icon {
+    flex: none;
+    color: var(--ink-5);
+    margin-top: 2px;
+    transition: color .35s ease;
+  }
+  .footer-line { margin: 0; }
+
+  .license-link {
+    color: var(--accent);
+    border-bottom: 1px solid rgba(var(--accent-rgb), .28);
+    padding-bottom: 1px;
+    white-space: nowrap;
+    transition: border-color .2s;
+  }
+  .license-link:hover { border-color: var(--accent); }
+  .link-arrow {
+    margin-left: 3px;
+    vertical-align: 1px;
+  }
+
+  /* ============ 全站页脚（署名） ============ */
+  .site-footer {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 52px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    letter-spacing: .04em;
+    color: var(--ink-5);
+    transition: border-color .35s ease, color .35s ease;
+  }
+
+  .credit-mark {
+    width: 5px;
+    height: 5px;
+    background: var(--accent);
+    flex: none;
+    transition: background-color .35s ease;
+  }
+
+  .credit-sep {
+    width: 1px;
+    height: 10px;
+    background: var(--line);
+    display: inline-block;
+    transition: background-color .35s ease;
+  }
+
+  .credit-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ink-4);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    white-space: nowrap;
+    transition: color .2s, border-color .2s;
+  }
+  .credit-link:hover {
+    color: var(--accent);
+    border-color: rgba(var(--accent-rgb), .4);
+  }
+  .credit-link svg { flex: none; }
+
+  /* ============ 空状态 ============ */
+  .empty { padding-top: 56px; }
+  .empty .back-link { margin-top: 26px; }
+
+  /* ============ 动画 ============ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(9px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: .35; }
+    50%      { opacity: .9; }
+  }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 620px) {
+    .wrap { padding: 0 20px 64px; }
+    .site-header { padding-top: 32px; }
+    .page-head { padding-top: 40px; }
+    .page-title { font-size: 26px; }
+    .chapter-body { font-size: 16px; line-height: 1.95; }
+    .toc-item {
+      grid-template-columns: 2.8em 1fr;
+      gap: 12px;
+      padding: 15px 0 15px 16px;
+    }
+    .toc-meta { grid-column: 2; margin-top: 5px; justify-self: start; }
+    .toc-wc { min-width: 0; text-align: left; }
+    .pager { flex-direction: column; gap: 18px; }
+    .pager-link { max-width: 100%; }
+    .pager-link.next { margin-left: 0; }
+    .site-footer { margin-top: 40px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="site-header">
+    <div class="header-row">
+      <a class="brand" href="./">
+        <span class="brand-mark"></span>
+        <span class="brand-name">别装了，我早就认出你了</span>
+      </a>
+      <button class="theme-toggle" id="themeToggle" type="button"
+              aria-label="切换到深色模式" title="切换到深色模式">
+        <!-- 浅色时显示月亮（点击进入深色） -->
+        <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16"
+             fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <!-- 深色时显示太阳（点击回到浅色） -->
+        <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16"
+             fill="none" stroke="currentColor" stroke-width="1.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+        </svg>
+      </button>
+    </div>
+    <div class="rule"></div>
+  </header>
+
+  <main id="main"></main>
+
+  <!-- 全站页脚：署名 -->
+  <footer class="site-footer">
+    <span class="credit-mark" aria-hidden="true"></span>
+    <span>© <span id="year"></span> 咏叹调 Aria</span>
+    <span class="credit-sep" aria-hidden="true"></span>
+    <a class="credit-link" href="https://linxianlww.github.io/"
+       target="_blank" rel="noopener noreferrer">
+      个人网站
+      <svg viewBox="0 0 24 24" width="10" height="10" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="square"
+           aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
+    </a>
+  </footer>
+</div>
+
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================= 配置 ================= */
+  var CONFIG = {
+    contentsUrl: "./contents.txt",   // 目录文件
+    textDir:     "./texts/",         // 正文目录
+    charsPerMinute: 900              // 中文阅读速度（字/分钟）
+  };
+
+  var ICON_LEFT =
+    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.6" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">' +
+    '<path d="M15 5L8 12l7 7"/></svg>';
+
+  var ICON_RIGHT =
+    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.6" stroke-linecap="butt" stroke-linejoin="miter" aria-hidden="true">' +
+    '<path d="M9 5l7 7-7 7"/></svg>';
+
+  var ICON_CC =
+    '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.5" stroke-linecap="butt" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="8.5"/>' +
+    '<path d="M10.1 9.6a3.5 3.5 0 0 0 0 4.8M15.4 9.6a3.5 3.5 0 0 1 0 4.8"/></svg>';
+
+  var ICON_EXTERNAL =
+    '<svg class="link-arrow" viewBox="0 0 24 24" width="10" height="10" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">' +
+    '<path d="M7 17L17 7M9 7h8v8"/></svg>';
+
+  /* ================= 工具 ================= */
+  var cache = new Map();
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (m) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
+    });
+  }
+
+  function formatNum(n) {
+    return Number(n).toLocaleString("zh-CN");
+  }
+
+  function formatDuration(mins) {
+    if (mins < 60) return mins + " 分钟";
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    return m ? (h + " 小时 " + m + " 分钟") : (h + " 小时");
+  }
+
+  /** 统计中日韩字符数 */
+  function countCJK(text) {
+    var m = text.match(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g);
+    return m ? m.length : 0;
+  }
+
+  function readMinutes(chars) {
+    return Math.max(1, Math.ceil(chars / CONFIG.charsPerMinute));
+  }
+
+  /** 抓取正文（带 Promise 缓存，失败也不会重复请求） */
+  function fetchText(item) {
+    var key = item.raw;
+    if (!cache.has(key)) {
+      var p = (async function () {
+        var res = await fetch(CONFIG.textDir + encodeURIComponent(key) + ".md");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.text();
+      })();
+      cache.set(key, p);
+    }
+    return cache.get(key);
+  }
+
+  /* ================= 目录解析 ================= */
+  async function loadContents() {
+    var res = await fetch(CONFIG.contentsUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error("无法加载 contents.txt（HTTP " + res.status + "）");
+
+    var text = await res.text();
+    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); })
+                    .filter(function (l) { return l.length > 0; });
+
+    if (!lines.length) throw new Error("contents.txt 中没有章节条目");
+
+    return lines.map(function (raw, i) {
+      var m = raw.match(/^(\d+)\s*(.*)$/);
+      var code = m ? m[1] : String(i + 1).padStart(3, "0");
+      var title = (m && m[2]) ? m[2] : raw;
+      return {
+        raw: raw,
+        code: code,
+        num: code.padStart(3, "0"),
+        title: title,
+        wc: null,
+        rt: null,
+        error: false,
+        els: null
+      };
+    });
+  }
+
+  function numericKey(s) {
+    var m = String(s).match(/^\d+/);
+    return m ? String(parseInt(m[0], 10)) : null;
+  }
+
+  function findIndexByCode(items, c) {
+    var target = numericKey(c);
+    var i = -1;
+    if (target !== null) {
+      i = items.findIndex(function (it) { return numericKey(it.code) === target; });
+    }
+    if (i < 0) {
+      i = items.findIndex(function (it) { return it.raw.indexOf(c) === 0; });
+    }
+    return i;
+  }
+
+  /* ================= 目录页 ================= */
+  function renderToc(items) {
+    document.title = "目录 · 别装了，我早就认出你了";
+
+    var main = document.getElementById("main");
+    main.innerHTML =
+      '<div class="page-head">' +
+        '<h1 class="page-title">目录</h1>' +
+        '<p class="page-sub" id="tocSub">共 ' + items.length + ' 章 · 正在统计字数…</p>' +
+      '</div>' +
+      '<ul class="toc" id="tocList"></ul>';
+
+    var list = document.getElementById("tocList");
+
+    items.forEach(function (it, i) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+
+      a.className = "toc-item";
+      a.href = "?c=" + encodeURIComponent(it.num);
+      a.style.animationDelay = Math.min(i, 24) * 30 + "ms";
+      a.innerHTML =
+        '<span class="toc-num">' + escapeHtml(it.num) + '</span>' +
+        '<span class="toc-title">' + escapeHtml(it.title) + '</span>' +
+        '<span class="toc-meta">' +
+          '<span class="toc-wc">···</span>' +
+          '<span class="sep"></span>' +
+          '<span class="toc-rt">···</span>' +
+        '</span>';
+
+      li.appendChild(a);
+      list.appendChild(li);
+
+      it.els = {
+        wc: a.querySelector(".toc-wc"),
+        rt: a.querySelector(".toc-rt")
+      };
+    });
+
+    loadMeta(items, function () { updateTocSummary(items); });
+  }
+
+  function updateItemMeta(it) {
+    if (!it.els) return;
+    if (it.error) {
+      it.els.wc.textContent = "字数未知";
+      it.els.rt.textContent = "—";
+      return;
+    }
+    if (it.wc === null) return;
+    it.els.wc.textContent = formatNum(it.wc) + " 字";
+    it.els.rt.textContent = "约 " + it.rt + " 分钟";
+  }
+
+  function updateTocSummary(items) {
+    var el = document.getElementById("tocSub");
+    if (!el) return;
+
+    var done = items.filter(function (i) { return i.wc !== null || i.error; });
+    if (done.length < items.length) {
+      el.textContent = "共 " + items.length + " 章 · 正在统计字数…";
+      return;
+    }
+
+    var ok = items.filter(function (i) { return i.wc !== null; });
+    var totalWc = ok.reduce(function (s, i) { return s + i.wc; }, 0);
+    var totalRt = ok.reduce(function (s, i) { return s + i.rt; }, 0);
+
+    el.textContent =
+      "共 " + items.length + " 章 · " +
+      formatNum(totalWc) + " 字 · 约 " + formatDuration(totalRt);
+  }
+
+  /** 并发抓取所有正文，统计字数 */
+  function loadMeta(items, onProgress) {
+    var queue = items.slice();
+    var total = items.length;
+    var done = 0;
+    var CONCURRENCY = 6;
+
+    async function worker() {
+      while (queue.length) {
+        var it = queue.shift();
+        try {
+          var txt = await fetchText(it);
+          var wc = countCJK(txt);
+          it.wc = wc;
+          it.rt = readMinutes(wc);
+        } catch (e) {
+          it.error = true;
+        }
+        done++;
+        updateItemMeta(it);
+        if (done % 3 === 0 || done === total) onProgress();
+      }
+    }
+
+    var n = Math.min(CONCURRENCY, total);
+    var workers = [];
+    for (var i = 0; i < n; i++) workers.push(worker());
+
+    Promise.all(workers).then(onProgress);
+  }
+
+  /* ================= 阅读页 ================= */
+  async function renderReader(items, code) {
+    var idx = findIndexByCode(items, code);
+    if (idx < 0) { renderNotFound(code); return; }
+
+    var it = items[idx];
+    var prev = idx > 0 ? items[idx - 1] : null;
+    var next = idx < items.length - 1 ? items[idx + 1] : null;
+
+    document.title = it.title + " · 别装了，我早就认出你了";
+
+    var main = document.getElementById("main");
+    main.innerHTML =
+      '<div class="reader">' +
+        '<a class="back-link" href="./">' + ICON_LEFT + '<span>目录</span></a>' +
+
+        '<header class="chapter-head">' +
+          '<h1 class="chapter-title">' + escapeHtml(it.title) + '</h1>' +
+          '<div class="chapter-meta">' +
+            '<span class="meta-mark"></span>' +
+            '<span id="chapterMeta">正在统计…</span>' +
+          '</div>' +
+        '</header>' +
+
+        '<div class="chapter-rule"></div>' +
+
+        '<article class="chapter-body" id="chapterBody">' +
+          '<div class="body-loading">正在载入正文…</div>' +
+        '</article>' +
+
+        buildPager(prev, next) +
+
+        '<div class="chapter-footer">' +
+          '<span class="footer-icon">' + ICON_CC + '</span>' +
+          '<p class="footer-line">本文以 ' +
+            '<a class="license-link" ' +
+               'href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" ' +
+               'target="_blank" rel="noopener noreferrer">' +
+              'CC BY-NC-SA 4.0 国际许可协议' + ICON_EXTERNAL +
+            '</a> 发布。' +
+          '</p>' +
+        '</div>' +
+      '</div>';
+
+    // 加载正文
+    var bodyEl = document.getElementById("chapterBody");
+    var metaEl = document.getElementById("chapterMeta");
+
+    try {
+      var text = await fetchText(it);
+      var wc = countCJK(text);
+      metaEl.textContent = formatNum(wc) + " 字";
+      metaEl.insertAdjacentHTML("afterend",
+        '<span class="meta-sep"></span><span>约 ' + readMinutes(wc) + ' 分钟</span>');
+
+      bodyEl.innerHTML = "";
+      appendParagraphs(text, bodyEl);
+    } catch (e) {
+      metaEl.textContent = "内容加载失败";
+      bodyEl.innerHTML =
+        '<p class="body-error">本章内容无法加载（' + escapeHtml(e.message || String(e)) +
+        '）。请确认 texts 目录下存在对应文件，并通过本地 HTTP 服务器访问本页面。</p>';
+    }
+  }
+
+  function buildPager(prev, next) {
+    var prevHtml = prev
+      ? '<a class="pager-link prev" href="?c=' + encodeURIComponent(prev.num) + '">' +
+          ICON_LEFT +
+          '<span class="pager-text">' +
+            '<span class="pager-label">上一章</span>' +
+            '<span class="pager-name">' + escapeHtml(prev.title) + '</span>' +
+          '</span></a>'
+      : '<span class="pager-link prev is-disabled">' +
+          ICON_LEFT +
+          '<span class="pager-text">' +
+            '<span class="pager-label">上一章</span>' +
+            '<span class="pager-name">已经是第一章</span>' +
+          '</span></span>';
+
+    var nextHtml = next
+      ? '<a class="pager-link next" href="?c=' + encodeURIComponent(next.num) + '">' +
+          '<span class="pager-text">' +
+            '<span class="pager-label">下一章</span>' +
+            '<span class="pager-name">' + escapeHtml(next.title) + '</span>' +
+          '</span>' + ICON_RIGHT + '</a>'
+      : '<span class="pager-link next is-disabled">' +
+          '<span class="pager-text">' +
+            '<span class="pager-label">下一章</span>' +
+            '<span class="pager-name">已经是最后一章</span>' +
+          '</span>' + ICON_RIGHT + '</span>';
+
+    return '<nav class="pager">' + prevHtml + nextHtml + '</nav>';
+  }
+
+  /**
+   * 逐行渲染正文：
+   *  - 每个非空行 → 一个首行缩进的段落
+   *  - 空行 → 下一段获得更大的段距
+   *  - 去掉行首的 Markdown 标题标记
+   */
+  function appendParagraphs(text, container) {
+    var lines = text.replace(/\r\n?/g, "\n").split("\n");
+    var frag = document.createDocumentFragment();
+    var gap = false;
+    var hasContent = false;
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+
+      if (!line) {
+        if (hasContent) gap = true;
+        continue;
+      }
+
+      line = line.replace(/^#{1,6}\s*/, "");
+      if (!line) { gap = true; continue; }
+
+      var p = document.createElement("p");
+      p.textContent = line;
+      if (gap && hasContent) p.classList.add("gap");
+
+      frag.appendChild(p);
+      hasContent = true;
+      gap = false;
+    }
+
+    container.appendChild(frag);
+  }
+
+  /* ================= 空状态 ================= */
+  function renderNotFound(code) {
+    document.title = "未找到章节 · 别装了，我早就认出你了";
+    document.getElementById("main").innerHTML =
+      '<div class="empty">' +
+        '<h1 class="page-title">未找到章节</h1>' +
+        '<p class="page-sub">目录中没有以「' + escapeHtml(code) + '」开头的章节。</p>' +
+        '<a class="back-link" href="./">' + ICON_LEFT + '<span>返回目录</span></a>' +
+      '</div>';
+  }
+
+  function renderError(err) {
+    document.title = "加载失败 · 别装了，我早就认出你了";
+    document.getElementById("main").innerHTML =
+      '<div class="empty">' +
+        '<h1 class="page-title">加载失败</h1>' +
+        '<p class="page-sub">' + escapeHtml(err.message || String(err)) + '</p>' +
+        '<p class="page-sub">请确认 contents.txt 与 texts/ 目录与当前页面位于同一路径下，' +
+        '并通过本地 HTTP 服务器（而非 file:// 直接打开）访问。</p>' +
+        '<a class="back-link" href="./">' + ICON_LEFT + '<span>重新加载</span></a>' +
+      '</div>';
+  }
+
+  /* ================= 主题切换 ================= */
+  var themeToggle = document.getElementById("themeToggle");
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function syncToggleLabel(t) {
+    if (!themeToggle) return;
+    var label = t === "dark" ? "切换到浅色模式" : "切换到深色模式";
+    themeToggle.setAttribute("aria-label", label);
+    themeToggle.setAttribute("title", label);
+  }
+
+  function applyTheme(t, persist) {
+    document.documentElement.setAttribute("data-theme", t);
+    if (persist) {
+      try { localStorage.setItem("theme", t); } catch (e) {}
+    }
+    syncToggleLabel(t);
+  }
+
+  if (themeToggle) {
+    syncToggleLabel(currentTheme());
+    themeToggle.addEventListener("click", function () {
+      applyTheme(currentTheme() === "dark" ? "light" : "dark", true);
+    });
+  }
+
+  // 用户未手动选择时，跟随系统主题变化
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  function onSchemeChange(e) {
+    var saved = null;
+    try { saved = localStorage.getItem("theme"); } catch (err) {}
+    if (saved !== "dark" && saved !== "light") {
+      applyTheme(e.matches ? "dark" : "light", false);
+    }
+  }
+  if (mq.addEventListener) mq.addEventListener("change", onSchemeChange);
+  else if (mq.addListener) mq.addListener(onSchemeChange);
+
+  /* ================= 启动 ================= */
+  (async function main() {
+    var params = new URLSearchParams(location.search);
+    var code = params.get("c");
+
+    try {
+      var items = await loadContents();
+      if (code !== null && code.trim() !== "") {
+        await renderReader(items, code.trim());
+      } else {
+        renderToc(items);
+      }
+    } catch (err) {
+      renderError(err);
+    }
+  })();
+})();
+</script>
+</body>
+</html>
